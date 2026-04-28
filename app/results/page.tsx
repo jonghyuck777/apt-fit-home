@@ -131,7 +131,12 @@ function getInteriorInfo(buildYear: string, currentYear: number) {
   return { cost: "4,000~7,000만원", desc: "전체 리모델링을 고려해야 해요." };
 }
 
-function getReasonText(priceEok: number, budget: number, commuteA: number, commuteB: number, stationA: string, stationB: string, pyeong: number, buildYear: string, currentYear: number): string {
+function getReasonText(
+  priceEok: number, budget: number,
+  commuteA: number, commuteB: number,
+  stationA: string, stationB: string,
+  pyeong: number, buildYear: string, currentYear: number
+): string {
   const age = currentYear - Number(buildYear);
   const totalCommute = commuteA + commuteB;
   const underBudget = priceEok <= budget;
@@ -144,7 +149,11 @@ function getReasonText(priceEok: number, budget: number, commuteA: number, commu
   return "중간지점 기준 출퇴근 합산 " + totalCommute + "분으로 균형 잡힌 매물이에요.";
 }
 
-function getBadges(priceEok: number, budget: number, commuteA: number, commuteB: number, age: number, pyeong: number, school: string, district: string): string[] {
+function getBadges(
+  priceEok: number, budget: number,
+  commuteA: number, commuteB: number,
+  age: number, pyeong: number, school: string, district: string
+): string[] {
   const badges: string[] = [];
   if (priceEok <= budget * 0.9) badges.push("예산 여유");
   else if (priceEok <= budget) badges.push("예산 내");
@@ -187,20 +196,6 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
   );
 }
 
-function NaverLink({ aptNm, district }: { aptNm: string; district: string }) {
-  const url = "https://search.naver.com/search.naver?query=" + encodeURIComponent(aptNm + " " + district + " 아파트");
-  return (
-    
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center justify-center rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition"
-    >
-      네이버 검색
-    </a>
-  );
-}
-
 function ResultsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -221,7 +216,10 @@ function ResultsPageInner() {
   const monthlyInterest = Math.round((loanNeeded * 100000000 * 0.035) / 12 / 10000);
 
   const sortedDistricts = Object.entries(LAWD_CODES)
-    .map(([name, info]) => ({ name, ...info, dist: midLat && midLng ? haversineKm(midLat, midLng, info.lat, info.lng) : 999 }))
+    .map(([name, info]) => ({
+      name, ...info,
+      dist: midLat && midLng ? haversineKm(midLat, midLng, info.lat, info.lng) : 999,
+    }))
     .sort((a, b) => a.dist - b.dist)
     .map((d) => d.name);
 
@@ -232,7 +230,11 @@ function ResultsPageInner() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [dealYmd, setDealYmd] = useState("");
 
-  function calcScore(priceEok: number, pyeong: number, buildYear: string, district: string, commuteA: number, commuteB: number) {
+  function calcScore(
+    priceEok: number, pyeong: number,
+    buildYear: string, district: string,
+    commuteA: number, commuteB: number
+  ) {
     if (pyeongPref !== "any") {
       const prefNum = Number(pyeongPref);
       if (Math.abs(pyeong - prefNum) > 20) return null;
@@ -251,8 +253,9 @@ function ResultsPageInner() {
     else scoreCommute = 5;
 
     let scorePyeong = 0;
-    if (pyeongPref === "any") { scorePyeong = 15; }
-    else {
+    if (pyeongPref === "any") {
+      scorePyeong = 15;
+    } else {
       const prefNum = Number(pyeongPref);
       if (pyeong >= prefNum && pyeong < prefNum + 10) scorePyeong = 20;
       else if (Math.abs(pyeong - prefNum) <= 10) scorePyeong = 12;
@@ -286,7 +289,10 @@ function ResultsPageInner() {
         const res = await fetch("/api/trades?lawdCd=" + lawdCd);
         const data = await res.json();
         if (data.dealYmd) setDealYmd(data.dealYmd);
-        if (!data.items || data.items.length === 0) { setResults([]); return; }
+        if (!data.items || data.items.length === 0) {
+          setResults([]);
+          return;
+        }
 
         const commuteAMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationA);
         const commuteBMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationB);
@@ -339,6 +345,11 @@ function ResultsPageInner() {
     load();
   }, [selectedDistrict]);
 
+  const openNaver = (aptNm: string, district: string) => {
+    const query = encodeURIComponent(aptNm + " " + district + " 아파트");
+    window.open("https://search.naver.com/search.naver?query=" + query, "_blank");
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="mx-auto max-w-2xl px-4 py-6">
@@ -381,9 +392,7 @@ function ResultsPageInner() {
 
         <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
           <p className="mb-1 text-sm font-bold text-slate-900">지역 선택</p>
-          <p className="mb-3 text-xs font-medium text-slate-500">
-            중간지점({nearStation})에서 가까운 순서
-          </p>
+          <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
               <button
@@ -443,15 +452,9 @@ function ResultsPageInner() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">
-                      {item.priceEok.toFixed(1)}억
-                    </span>
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">
-                      {item.pyeong}평
-                    </span>
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">
-                      {item.buildYear}년식
-                    </span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.priceEok.toFixed(1)}억</span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.pyeong}평</span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.buildYear}년식</span>
                   </div>
 
                   <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
@@ -485,7 +488,12 @@ function ResultsPageInner() {
                     >
                       {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
                     </button>
-                    <NaverLink aptNm={item.aptNm} district={selectedDistrict} />
+                    <button
+                      onClick={() => openNaver(item.aptNm, selectedDistrict)}
+                      className="rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition"
+                    >
+                      네이버 검색
+                    </button>
                   </div>
 
                   {expandedIndex === index && (
@@ -501,33 +509,23 @@ function ResultsPageInner() {
                       <div className="mt-4 grid grid-cols-2 gap-2">
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">예산</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">
-                            {item.priceEok <= budget ? "예산 내" : "초과"}
-                          </p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
                           <p className="text-xs text-slate-400">{item.priceEok.toFixed(1)}억 / {budget}억</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">연식</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">
-                            {currentYear - Number(item.buildYear)}년차
-                          </p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{currentYear - Number(item.buildYear)}년차</p>
                           <p className="text-xs text-slate-400">{item.buildYear}년 준공</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">면적</p>
                           <p className="mt-1 text-sm font-bold text-slate-900">{item.pyeong}평</p>
-                          <p className="text-xs text-slate-400">
-                            선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}
-                          </p>
+                          <p className="text-xs text-slate-400">선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">대출</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">
-                            {loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}
-                          </p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
+                          <p className="text-xs text-slate-400">{loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}</p>
                         </div>
                       </div>
                     </div>
