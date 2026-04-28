@@ -329,7 +329,6 @@ function ResultsPageInner() {
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="mx-auto max-w-2xl px-4 py-6">
 
-        {/* 헤더 */}
         <div className="mb-5 flex items-center gap-3">
           <button onClick={() => router.back()}
             className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold">
@@ -344,7 +343,6 @@ function ResultsPageInner() {
           </div>
         </div>
 
-        {/* 조건 요약 */}
         <div className="mb-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">예산 {budget}억</span>
           <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">현금 {cash}억</span>
@@ -353,7 +351,6 @@ function ResultsPageInner() {
           <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">{buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}</span>
         </div>
 
-        {/* 지역 선택 */}
         <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
           <p className="mb-1 text-sm font-bold text-slate-900">지역 선택</p>
           <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
@@ -367,24 +364,24 @@ function ResultsPageInner() {
           </div>
         </div>
 
-        {/* 결과 */}
         {loading ? (
           <div className="py-20 text-center">
+            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
             <p className="text-slate-500 font-medium">실거래가 데이터 불러오는 중...</p>
           </div>
         ) : error ? (
           <div className="py-20 text-center text-red-500 font-medium">{error}</div>
         ) : results.length === 0 ? (
-          <div className="py-20 text-center">
-            <p className="text-slate-500 font-medium">해당 조건의 거래 데이터가 없어요.</p>
-            <p className="text-slate-400 text-sm mt-1">다른 지역을 선택해보세요.</p>
+          <div className="py-20 text-center rounded-2xl bg-white border border-slate-100 p-8">
+            <p className="text-2xl mb-3">🔍</p>
+            <p className="text-slate-700 font-bold mb-1">조건에 맞는 매물이 없어요</p>
+            <p className="text-slate-400 text-sm">다른 지역을 선택하거나 평수 조건을 변경해보세요.</p>
           </div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm font-bold text-slate-700">{selectedDistrict} · 총 {results.length}개</p>
             {results.map((item, index) => (
               <article key={index} className={"rounded-2xl border-2 overflow-hidden " + getScoreBg(item.score)}>
-                {/* 카드 상단 */}
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
@@ -393,8 +390,6 @@ function ResultsPageInner() {
                         <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
                       </div>
                       <p className="text-xs font-medium text-slate-500">{selectedDistrict} {item.umdNm} · {item.floor}층</p>
-
-                      {/* 배지 */}
                       {item.badges.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {item.badges.map((badge, i) => (
@@ -403,7 +398,6 @@ function ResultsPageInner() {
                         </div>
                       )}
                     </div>
-
                     <div className="text-center bg-white rounded-xl p-3 shadow-sm min-w-[64px]">
                       <p className="text-xs font-bold text-slate-500">점수</p>
                       <p className={"text-2xl font-extrabold " + getScoreColor(item.score)}>{item.score}</p>
@@ -411,24 +405,20 @@ function ResultsPageInner() {
                     </div>
                   </div>
 
-                  {/* 기본 정보 */}
                   <div className="mt-3 flex flex-wrap gap-2">
                     <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.priceEok.toFixed(1)}억</span>
                     <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.pyeong}평</span>
                     <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.buildYear}년식</span>
                   </div>
 
-                  {/* 최근 거래 */}
                   <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
                     <p className="text-xs font-bold text-white">최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)</p>
                   </div>
 
-                  {/* 추천 이유 */}
                   <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
                     <p className="text-xs font-medium text-amber-800">{item.reasonText}</p>
                   </div>
 
-                  {/* 출퇴근 + 인테리어 */}
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-white border border-slate-200 p-3">
                       <p className="text-xs font-bold text-slate-500 mb-1">출퇴근 예상</p>
@@ -443,14 +433,22 @@ function ResultsPageInner() {
                     </div>
                   </div>
 
-                  {/* 점수 상세 버튼 */}
-                  <button
-                    onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                    className="mt-3 w-full rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition">
-                    {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
-                  </button>
+                  {/* 버튼 2개 */}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                      className="rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition">
+                      {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
+                    </button>
+                    
+                      href={"https://search.naver.com/search.naver?query=" + encodeURIComponent(item.aptNm + " " + selectedDistrict + " 아파트")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition">
+                      네이버 검색
+                    </a>
+                  </div>
 
-                  {/* 점수 상세 */}
                   {expandedIndex === index && (
                     <div className="mt-3 rounded-xl bg-white border border-slate-200 p-4">
                       <p className="text-sm font-bold text-slate-900 mb-3">점수 상세 분석</p>
@@ -499,7 +497,10 @@ export default function ResultsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-500 font-medium">로딩 중...</p>
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-500 font-medium">로딩 중...</p>
+        </div>
       </div>
     }>
       <ResultsPageInner />
