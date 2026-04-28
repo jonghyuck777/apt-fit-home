@@ -187,6 +187,20 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
   );
 }
 
+function NaverLink({ aptNm, district }: { aptNm: string; district: string }) {
+  const url = "https://search.naver.com/search.naver?query=" + encodeURIComponent(aptNm + " " + district + " 아파트");
+  return (
+    
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition"
+    >
+      네이버 검색
+    </a>
+  );
+}
+
 function ResultsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -330,15 +344,21 @@ function ResultsPageInner() {
       <div className="mx-auto max-w-2xl px-4 py-6">
 
         <div className="mb-5 flex items-center gap-3">
-          <button onClick={() => router.back()}
-            className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold"
+          >
             ←
           </button>
           <div>
             <h1 className="text-xl font-extrabold text-slate-900">추천 결과</h1>
             <p className="text-xs font-medium text-slate-500">
               {stationA} ↔ {stationB} · 중간: {nearStation}
-              {dealYmd && <span className="ml-1 text-slate-400">({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)</span>}
+              {dealYmd && (
+                <span className="ml-1 text-slate-400">
+                  ({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -346,18 +366,31 @@ function ResultsPageInner() {
         <div className="mb-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">예산 {budget}억</span>
           <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">현금 {cash}억</span>
-          {loanNeeded > 0 && <span className="rounded-full bg-amber-500 text-white px-3 py-1 text-xs font-bold">대출 {loanNeeded.toFixed(1)}억 · 월 {monthlyInterest}만원</span>}
-          <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">{pyeongPref === "any" ? "평수 무관" : pyeongPref + "평대"}</span>
-          <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">{buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}</span>
+          {loanNeeded > 0 && (
+            <span className="rounded-full bg-amber-500 text-white px-3 py-1 text-xs font-bold">
+              대출 {loanNeeded.toFixed(1)}억 · 월 {monthlyInterest}만원
+            </span>
+          )}
+          <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">
+            {pyeongPref === "any" ? "평수 무관" : pyeongPref + "평대"}
+          </span>
+          <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">
+            {buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}
+          </span>
         </div>
 
         <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
           <p className="mb-1 text-sm font-bold text-slate-900">지역 선택</p>
-          <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
+          <p className="mb-3 text-xs font-medium text-slate-500">
+            중간지점({nearStation})에서 가까운 순서
+          </p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
-              <button key={district} onClick={() => setSelectedDistrict(district)}
-                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
+              <button
+                key={district}
+                onClick={() => setSelectedDistrict(district)}
+                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}
+              >
                 {district}
               </button>
             ))}
@@ -389,11 +422,15 @@ function ResultsPageInner() {
                         <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
                         <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
                       </div>
-                      <p className="text-xs font-medium text-slate-500">{selectedDistrict} {item.umdNm} · {item.floor}층</p>
+                      <p className="text-xs font-medium text-slate-500">
+                        {selectedDistrict} {item.umdNm} · {item.floor}층
+                      </p>
                       {item.badges.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {item.badges.map((badge, i) => (
-                            <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{badge}</span>
+                            <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
+                              {badge}
+                            </span>
                           ))}
                         </div>
                       )}
@@ -406,13 +443,21 @@ function ResultsPageInner() {
                   </div>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.priceEok.toFixed(1)}억</span>
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.pyeong}평</span>
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.buildYear}년식</span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">
+                      {item.priceEok.toFixed(1)}억
+                    </span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">
+                      {item.pyeong}평
+                    </span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">
+                      {item.buildYear}년식
+                    </span>
                   </div>
 
                   <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
-                    <p className="text-xs font-bold text-white">최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)</p>
+                    <p className="text-xs font-bold text-white">
+                      최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)
+                    </p>
                   </div>
 
                   <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
@@ -433,22 +478,14 @@ function ResultsPageInner() {
                     </div>
                   </div>
 
-                  {/* 버튼 2개 */}
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                      className="rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition">
+                      className="rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+                    >
                       {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
                     </button>
-                    
-                    href={"https://search.naver.com/search.naver?query=" + encodeURIComponent(item.aptNm + " " + selectedDistrict + " 아파트")}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="flex items-center justify-center rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition"
->
-  네이버 검색
-</a>
-                    </a>
+                    <NaverLink aptNm={item.aptNm} district={selectedDistrict} />
                   </div>
 
                   {expandedIndex === index && (
@@ -464,23 +501,33 @@ function ResultsPageInner() {
                       <div className="mt-4 grid grid-cols-2 gap-2">
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">예산</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">
+                            {item.priceEok <= budget ? "예산 내" : "초과"}
+                          </p>
                           <p className="text-xs text-slate-400">{item.priceEok.toFixed(1)}억 / {budget}억</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">연식</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{currentYear - Number(item.buildYear)}년차</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">
+                            {currentYear - Number(item.buildYear)}년차
+                          </p>
                           <p className="text-xs text-slate-400">{item.buildYear}년 준공</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">면적</p>
                           <p className="mt-1 text-sm font-bold text-slate-900">{item.pyeong}평</p>
-                          <p className="text-xs text-slate-400">선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}</p>
+                          <p className="text-xs text-slate-400">
+                            선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}
+                          </p>
                         </div>
                         <div className="rounded-xl bg-slate-50 p-3 text-center">
                           <p className="text-xs font-medium text-slate-500">대출</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
-                          <p className="text-xs text-slate-400">{loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">
+                            {loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -497,14 +544,16 @@ function ResultsPageInner() {
 
 export default function ResultsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-500 font-medium">로딩 중...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+            <p className="text-slate-500 font-medium">로딩 중...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ResultsPageInner />
     </Suspense>
   );
