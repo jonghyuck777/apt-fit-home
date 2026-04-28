@@ -124,11 +124,11 @@ function estimateCommute(districtLat: number, districtLng: number, stationName: 
 
 function getInteriorInfo(buildYear: string, currentYear: number) {
   const age = currentYear - Number(buildYear);
-  if (age <= 5) return { cost: "500~1,000만원", desc: "거의 새집 수준이에요. 청소와 소품 교체 정도면 충분해요." };
-  if (age <= 10) return { cost: "1,000~2,000만원", desc: "전반적으로 깔끔한 편이에요. 도배 장판 정도만 해도 쾌적해요." };
-  if (age <= 15) return { cost: "1,500~3,000만원", desc: "도배 장판 주방 정도 부분 수리를 추천해요." };
-  if (age <= 20) return { cost: "2,500~4,500만원", desc: "욕실 주방 바닥 등 주요 공간 리모델링이 필요할 수 있어요." };
-  return { cost: "4,000~7,000만원", desc: "전체 리모델링을 고려해야 해요. 공사 후 새집처럼 쓸 수 있어요." };
+  if (age <= 5) return { cost: "500~1,000만원", desc: "거의 새집 수준이에요." };
+  if (age <= 10) return { cost: "1,000~2,000만원", desc: "도배 장판 정도만 해도 쾌적해요." };
+  if (age <= 15) return { cost: "1,500~3,000만원", desc: "도배 장판 주방 부분 수리 추천해요." };
+  if (age <= 20) return { cost: "2,500~4,500만원", desc: "주요 공간 리모델링이 필요해요." };
+  return { cost: "4,000~7,000만원", desc: "전체 리모델링을 고려해야 해요." };
 }
 
 function getReasonText(priceEok: number, budget: number, commuteA: number, commuteB: number, stationA: string, stationB: string, pyeong: number, buildYear: string, currentYear: number): string {
@@ -139,9 +139,9 @@ function getReasonText(priceEok: number, budget: number, commuteA: number, commu
   if (underBudget && age <= 10) return "예산 내 가격에 준신축 수준이라 인테리어 부담이 적어요.";
   if (underBudget) return "예산 대비 가격이 적당해요. 대출 부담 없이 접근 가능한 매물이에요.";
   if (totalCommute <= 50) return stationA + "까지 " + commuteA + "분, " + stationB + "까지 " + commuteB + "분으로 두 분 모두 출퇴근이 짧아요.";
-  if (age <= 5) return "신축 수준이라 인테리어 비용이 거의 없어요. 바로 입주해도 쾌적해요.";
-  if (pyeong >= 33) return pyeong + "평 넓은 공간으로 가족이 생활하기에 여유로워요.";
-  return "중간지점 기준으로 두 분의 출퇴근 합산이 " + totalCommute + "분으로 균형 잡힌 매물이에요.";
+  if (age <= 5) return "신축 수준이라 인테리어 비용이 거의 없어요.";
+  if (pyeong >= 33) return pyeong + "평 넓은 공간으로 가족 생활에 여유로워요.";
+  return "중간지점 기준 출퇴근 합산 " + totalCommute + "분으로 균형 잡힌 매물이에요.";
 }
 
 function getBadges(priceEok: number, budget: number, commuteA: number, commuteB: number, age: number, pyeong: number, school: string, district: string): string[] {
@@ -161,7 +161,7 @@ function getBadges(priceEok: number, budget: number, commuteA: number, commuteB:
 
 function getScoreColor(score: number) {
   if (score >= 80) return "text-emerald-600";
-  if (score >= 60) return "text-amber-600";
+  if (score >= 60) return "text-amber-500";
   return "text-red-500";
 }
 
@@ -177,11 +177,11 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
   return (
     <div>
       <div className="flex justify-between text-xs mb-1">
-        <span className="text-slate-600">{label}</span>
-        <span className="font-bold text-slate-800">{score}/{max}</span>
+        <span className="font-medium text-slate-700">{label}</span>
+        <span className="font-bold text-slate-900">{score}/{max}</span>
       </div>
       <div className="h-2 rounded-full bg-slate-200">
-        <div className={"h-2 rounded-full " + color} style={{ width: pct + "%" }} />
+        <div className={"h-2 rounded-full transition-all " + color} style={{ width: pct + "%" }} />
       </div>
     </div>
   );
@@ -326,148 +326,165 @@ function ResultsPageInner() {
   }, [selectedDistrict]);
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-6 flex items-center gap-4">
-          <button onClick={() => router.back()} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-            돌아가기
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+      <div className="mx-auto max-w-2xl px-4 py-6">
+
+        {/* 헤더 */}
+        <div className="mb-5 flex items-center gap-3">
+          <button onClick={() => router.back()}
+            className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold">
+            ←
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">아파트 추천 결과</h1>
-            <p className="text-sm text-slate-500">
-              {stationA} 와 {stationB} 중간 근처 역: {nearStation}
-              {dealYmd && <span className="ml-2 text-xs text-slate-400">({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 실거래가 기준)</span>}
+            <h1 className="text-xl font-extrabold text-slate-900">추천 결과</h1>
+            <p className="text-xs font-medium text-slate-500">
+              {stationA} ↔ {stationB} · 중간: {nearStation}
+              {dealYmd && <span className="ml-1 text-slate-400">({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)</span>}
             </p>
           </div>
         </div>
 
-        <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">예산 {budget}억</span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">현금 {cash}억</span>
-            {loanNeeded > 0 && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">대출 {loanNeeded.toFixed(1)}억 월 이자 약 {monthlyInterest}만원</span>}
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{pyeongPref === "any" ? "평수 무관" : pyeongPref + "평대"}</span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}</span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">학군 {school === "yes" ? "중요" : school === "no" ? "무관" : "보통"}</span>
-          </div>
+        {/* 조건 요약 */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">예산 {budget}억</span>
+          <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">현금 {cash}억</span>
+          {loanNeeded > 0 && <span className="rounded-full bg-amber-500 text-white px-3 py-1 text-xs font-bold">대출 {loanNeeded.toFixed(1)}억 · 월 {monthlyInterest}만원</span>}
+          <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">{pyeongPref === "any" ? "평수 무관" : pyeongPref + "평대"}</span>
+          <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">{buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}</span>
         </div>
 
-        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4">
-          <p className="mb-1 text-sm font-semibold text-slate-700">지역 선택</p>
-          <p className="mb-3 text-xs text-slate-400">중간지점({nearStation})에서 가까운 순서로 정렬됐어요</p>
+        {/* 지역 선택 */}
+        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
+          <p className="mb-1 text-sm font-bold text-slate-900">지역 선택</p>
+          <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
               <button key={district} onClick={() => setSelectedDistrict(district)}
-                className={"rounded-full px-3 py-1 text-xs font-semibold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
+                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
                 {district}
               </button>
             ))}
           </div>
         </div>
 
+        {/* 결과 */}
         {loading ? (
-          <div className="py-20 text-center text-slate-500">실거래가 데이터 불러오는 중...</div>
+          <div className="py-20 text-center">
+            <p className="text-slate-500 font-medium">실거래가 데이터 불러오는 중...</p>
+          </div>
         ) : error ? (
-          <div className="py-20 text-center text-red-500">{error}</div>
+          <div className="py-20 text-center text-red-500 font-medium">{error}</div>
         ) : results.length === 0 ? (
-          <div className="py-20 text-center text-slate-500">해당 조건의 거래 데이터가 없어요. 다른 지역을 선택해보세요.</div>
+          <div className="py-20 text-center">
+            <p className="text-slate-500 font-medium">해당 조건의 거래 데이터가 없어요.</p>
+            <p className="text-slate-400 text-sm mt-1">다른 지역을 선택해보세요.</p>
+          </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">{selectedDistrict} 총 {results.length}개</p>
+            <p className="text-sm font-bold text-slate-700">{selectedDistrict} · 총 {results.length}개</p>
             {results.map((item, index) => (
-              <article key={index} className={"rounded-3xl border p-5 " + getScoreBg(item.score)}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold text-slate-400">{"#" + (index + 1)}</span>
-                      <h3 className="text-lg font-bold text-slate-900">{item.aptNm}</h3>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-500">{selectedDistrict} {item.umdNm} {item.floor}층</p>
-
-                    {item.badges.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {item.badges.map((badge, i) => (
-                          <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-medium text-white">{badge}</span>
-                        ))}
+              <article key={index} className={"rounded-2xl border-2 overflow-hidden " + getScoreBg(item.score)}>
+                {/* 카드 상단 */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
+                        <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
                       </div>
-                    )}
+                      <p className="text-xs font-medium text-slate-500">{selectedDistrict} {item.umdNm} · {item.floor}층</p>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{item.priceEok.toFixed(1)}억</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{item.pyeong}평</span>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{item.buildYear}년식</span>
-                    </div>
-
-                    <div className="mt-2">
-                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
-                        최근 거래: {item.dealDate} {item.priceEok.toFixed(1)}억 ({item.floor}층)
-                      </span>
-                    </div>
-
-                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2">
-                      <p className="text-xs text-amber-800">{item.reasonText}</p>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <div className="rounded-xl border border-slate-200 bg-white p-3">
-                        <p className="text-xs font-semibold text-slate-500 mb-1">출퇴근 예상</p>
-                        <p className="text-sm font-bold text-slate-800">남편 약 {item.commuteA}분</p>
-                        <p className="text-sm font-bold text-slate-800">아내 약 {item.commuteB}분</p>
-                        <p className="text-xs text-slate-400 mt-1">합산 {item.commuteA + item.commuteB}분/일</p>
-                      </div>
-                      <div className="rounded-xl border border-slate-200 bg-white p-3">
-                        <p className="text-xs font-semibold text-slate-500 mb-1">예상 인테리어</p>
-                        <p className="text-sm font-bold text-slate-800">{item.interiorCost}</p>
-                        <p className="text-xs text-slate-400 mt-1">{item.interiorDesc}</p>
-                      </div>
-                    </div>
-
-                    <button onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                      className="mt-3 text-xs font-semibold text-slate-400 hover:text-slate-700">
-                      {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
-                    </button>
-
-                    {expandedIndex === index && (
-                      <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-sm font-semibold text-slate-700 mb-4">점수 상세 분석</p>
-                        <div className="space-y-3">
-                          <ScoreBar label="예산 적합도 (최대 35점)" score={item.scoreBudget} max={35} />
-                          <ScoreBar label="출퇴근 거리 (최대 30점)" score={item.scoreCommute} max={30} />
-                          <ScoreBar label="면적 적합도 (최대 20점)" score={item.scorePyeong} max={20} />
-                          <ScoreBar label="연식 적합도 (최대 10점)" score={item.scoreAge} max={10} />
-                          <ScoreBar label="학군 (최대 5점)" score={item.scoreSchool} max={5} />
+                      {/* 배지 */}
+                      {item.badges.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {item.badges.map((badge, i) => (
+                            <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{badge}</span>
+                          ))}
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-3">
-                          <div className="rounded-xl bg-slate-50 p-3 text-center">
-                            <p className="text-xs text-slate-500">예산 적합도</p>
-                            <p className="mt-1 font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
-                            <p className="text-xs text-slate-500">{item.priceEok.toFixed(1)}억 / 예산 {budget}억</p>
-                          </div>
-                          <div className="rounded-xl bg-slate-50 p-3 text-center">
-                            <p className="text-xs text-slate-500">연식</p>
-                            <p className="mt-1 font-bold text-slate-900">{currentYear - Number(item.buildYear)}년차</p>
-                            <p className="text-xs text-slate-500">{item.buildYear}년 준공</p>
-                          </div>
-                          <div className="rounded-xl bg-slate-50 p-3 text-center">
-                            <p className="text-xs text-slate-500">면적</p>
-                            <p className="mt-1 font-bold text-slate-900">{item.pyeong}평</p>
-                            <p className="text-xs text-slate-500">선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}</p>
-                          </div>
-                          <div className="rounded-xl bg-slate-50 p-3 text-center">
-                            <p className="text-xs text-slate-500">대출</p>
-                            <p className="mt-1 font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
-                            <p className="text-xs text-slate-500">{loanNeeded > 0 ? "월 이자 약 " + monthlyInterest + "만원" : "현금으로 가능"}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+
+                    <div className="text-center bg-white rounded-xl p-3 shadow-sm min-w-[64px]">
+                      <p className="text-xs font-bold text-slate-500">점수</p>
+                      <p className={"text-2xl font-extrabold " + getScoreColor(item.score)}>{item.score}</p>
+                      <p className="text-xs text-slate-400">/100</p>
+                    </div>
                   </div>
 
-                  <div className="text-center min-w-[60px]">
-                    <p className="text-xs font-semibold text-slate-500">추천 점수</p>
-                    <p className={"text-3xl font-bold " + getScoreColor(item.score)}>{item.score}</p>
-                    <p className="text-xs text-slate-400">/ 100</p>
+                  {/* 기본 정보 */}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.priceEok.toFixed(1)}억</span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.pyeong}평</span>
+                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.buildYear}년식</span>
                   </div>
+
+                  {/* 최근 거래 */}
+                  <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
+                    <p className="text-xs font-bold text-white">최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)</p>
+                  </div>
+
+                  {/* 추천 이유 */}
+                  <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-xs font-medium text-amber-800">{item.reasonText}</p>
+                  </div>
+
+                  {/* 출퇴근 + 인테리어 */}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-white border border-slate-200 p-3">
+                      <p className="text-xs font-bold text-slate-500 mb-1">출퇴근 예상</p>
+                      <p className="text-sm font-bold text-slate-900">남편 약 {item.commuteA}분</p>
+                      <p className="text-sm font-bold text-slate-900">아내 약 {item.commuteB}분</p>
+                      <p className="text-xs font-medium text-slate-400 mt-1">합산 {item.commuteA + item.commuteB}분/일</p>
+                    </div>
+                    <div className="rounded-xl bg-white border border-slate-200 p-3">
+                      <p className="text-xs font-bold text-slate-500 mb-1">예상 인테리어</p>
+                      <p className="text-sm font-bold text-slate-900">{item.interiorCost}</p>
+                      <p className="text-xs font-medium text-slate-400 mt-1">{item.interiorDesc}</p>
+                    </div>
+                  </div>
+
+                  {/* 점수 상세 버튼 */}
+                  <button
+                    onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                    className="mt-3 w-full rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition">
+                    {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
+                  </button>
+
+                  {/* 점수 상세 */}
+                  {expandedIndex === index && (
+                    <div className="mt-3 rounded-xl bg-white border border-slate-200 p-4">
+                      <p className="text-sm font-bold text-slate-900 mb-3">점수 상세 분석</p>
+                      <div className="space-y-3">
+                        <ScoreBar label="예산 적합도 (최대 35점)" score={item.scoreBudget} max={35} />
+                        <ScoreBar label="출퇴근 거리 (최대 30점)" score={item.scoreCommute} max={30} />
+                        <ScoreBar label="면적 적합도 (최대 20점)" score={item.scorePyeong} max={20} />
+                        <ScoreBar label="연식 적합도 (최대 10점)" score={item.scoreAge} max={10} />
+                        <ScoreBar label="학군 (최대 5점)" score={item.scoreSchool} max={5} />
+                      </div>
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <div className="rounded-xl bg-slate-50 p-3 text-center">
+                          <p className="text-xs font-medium text-slate-500">예산</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
+                          <p className="text-xs text-slate-400">{item.priceEok.toFixed(1)}억 / {budget}억</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-center">
+                          <p className="text-xs font-medium text-slate-500">연식</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{currentYear - Number(item.buildYear)}년차</p>
+                          <p className="text-xs text-slate-400">{item.buildYear}년 준공</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-center">
+                          <p className="text-xs font-medium text-slate-500">면적</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{item.pyeong}평</p>
+                          <p className="text-xs text-slate-400">선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}</p>
+                        </div>
+                        <div className="rounded-xl bg-slate-50 p-3 text-center">
+                          <p className="text-xs font-medium text-slate-500">대출</p>
+                          <p className="mt-1 text-sm font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
+                          <p className="text-xs text-slate-400">{loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </article>
             ))}
@@ -482,7 +499,7 @@ export default function ResultsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-500">로딩 중...</p>
+        <p className="text-slate-500 font-medium">로딩 중...</p>
       </div>
     }>
       <ResultsPageInner />
