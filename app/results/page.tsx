@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 type AptResult = {
@@ -131,12 +131,7 @@ function getInteriorInfo(buildYear: string, currentYear: number) {
   return { cost: "4,000~7,000만원", desc: "전체 리모델링을 고려해야 해요. 공사 후 새집처럼 쓸 수 있어요." };
 }
 
-function getReasonText(
-  priceEok: number, budget: number,
-  commuteA: number, commuteB: number,
-  stationA: string, stationB: string,
-  pyeong: number, buildYear: string, currentYear: number
-): string {
+function getReasonText(priceEok: number, budget: number, commuteA: number, commuteB: number, stationA: string, stationB: string, pyeong: number, buildYear: string, currentYear: number): string {
   const age = currentYear - Number(buildYear);
   const totalCommute = commuteA + commuteB;
   const underBudget = priceEok <= budget;
@@ -149,11 +144,7 @@ function getReasonText(
   return "중간지점 기준으로 두 분의 출퇴근 합산이 " + totalCommute + "분으로 균형 잡힌 매물이에요.";
 }
 
-function getBadges(
-  priceEok: number, budget: number,
-  commuteA: number, commuteB: number,
-  age: number, pyeong: number, school: string, district: string
-): string[] {
+function getBadges(priceEok: number, budget: number, commuteA: number, commuteB: number, age: number, pyeong: number, school: string, district: string): string[] {
   const badges: string[] = [];
   if (priceEok <= budget * 0.9) badges.push("예산 여유");
   else if (priceEok <= budget) badges.push("예산 내");
@@ -196,7 +187,7 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
   );
 }
 
-export default function ResultsPage() {
+function ResultsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -216,10 +207,7 @@ export default function ResultsPage() {
   const monthlyInterest = Math.round((loanNeeded * 100000000 * 0.035) / 12 / 10000);
 
   const sortedDistricts = Object.entries(LAWD_CODES)
-    .map(([name, info]) => ({
-      name, ...info,
-      dist: midLat && midLng ? haversineKm(midLat, midLng, info.lat, info.lng) : 999,
-    }))
+    .map(([name, info]) => ({ name, ...info, dist: midLat && midLng ? haversineKm(midLat, midLng, info.lat, info.lng) : 999 }))
     .sort((a, b) => a.dist - b.dist)
     .map((d) => d.name);
 
@@ -231,20 +219,16 @@ export default function ResultsPage() {
   const [dealYmd, setDealYmd] = useState("");
 
   function calcScore(priceEok: number, pyeong: number, buildYear: string, district: string, commuteA: number, commuteB: number) {
-    // 평수가 선호와 20평 이상 차이나면 제외
     if (pyeongPref !== "any") {
       const prefNum = Number(pyeongPref);
       if (Math.abs(pyeong - prefNum) > 20) return null;
     }
-
-    // 예산 점수 (35점)
     let scoreBudget = 0;
     if (priceEok <= budget * 0.9) scoreBudget = 35;
     else if (priceEok <= budget) scoreBudget = 28;
     else if (priceEok <= budget * 1.1) scoreBudget = 18;
     else scoreBudget = 5;
 
-    // 출퇴근 점수 (30점)
     let scoreCommute = 0;
     const totalCommute = commuteA + commuteB;
     if (totalCommute <= 50) scoreCommute = 30;
@@ -252,18 +236,15 @@ export default function ResultsPage() {
     else if (totalCommute <= 90) scoreCommute = 14;
     else scoreCommute = 5;
 
-    // 면적 점수 (20점)
     let scorePyeong = 0;
-    if (pyeongPref === "any") {
-      scorePyeong = 15;
-    } else {
+    if (pyeongPref === "any") { scorePyeong = 15; }
+    else {
       const prefNum = Number(pyeongPref);
       if (pyeong >= prefNum && pyeong < prefNum + 10) scorePyeong = 20;
       else if (Math.abs(pyeong - prefNum) <= 10) scorePyeong = 12;
       else scorePyeong = 4;
     }
 
-    // 연식 점수 (10점)
     let scoreAge = 0;
     const age = currentYear - Number(buildYear);
     if (buildAge === "new") scoreAge = age <= 5 ? 10 : age <= 10 ? 6 : 2;
@@ -271,7 +252,6 @@ export default function ResultsPage() {
     else if (buildAge === "old") scoreAge = age >= 20 ? 10 : age >= 15 ? 6 : 3;
     else scoreAge = 7;
 
-    // 학군 점수 (5점)
     let scoreSchool = 0;
     const schoolDistricts = ["강남구", "서초구", "송파구", "양천구", "노원구"];
     if (school === "yes" && schoolDistricts.includes(district)) scoreSchool = 5;
@@ -291,13 +271,8 @@ export default function ResultsPage() {
         const lawdCd = districtInfo?.code ?? "11200";
         const res = await fetch("/api/trades?lawdCd=" + lawdCd);
         const data = await res.json();
-
         if (data.dealYmd) setDealYmd(data.dealYmd);
-
-        if (!data.items || data.items.length === 0) {
-          setResults([]);
-          return;
-        }
+        if (!data.items || data.items.length === 0) { setResults([]); return; }
 
         const commuteAMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationA);
         const commuteBMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationB);
@@ -311,25 +286,16 @@ export default function ResultsPage() {
             const interior = getInteriorInfo(t.buildYear, currentYear);
             const scoreResult = calcScore(priceEok, pyeong, t.buildYear, selectedDistrict, commuteAMin, commuteBMin);
             if (!scoreResult) return null;
-
             const badges = getBadges(priceEok, budget, commuteAMin, commuteBMin, age, pyeong, school, selectedDistrict);
             const reasonText = getReasonText(priceEok, budget, commuteAMin, commuteBMin, stationA, stationB, pyeong, t.buildYear, currentYear);
-
             return {
-              aptNm: t.aptNm,
-              umdNm: t.umdNm,
-              pyeong,
-              priceEok,
+              aptNm: t.aptNm, umdNm: t.umdNm, pyeong, priceEok,
               buildYear: t.buildYear,
               dealDate: t.dealYear + "년 " + t.dealMonth + "월 " + t.dealDay + "일",
-              floor: t.floor,
-              district: selectedDistrict,
-              commuteA: commuteAMin,
-              commuteB: commuteBMin,
-              interiorCost: interior.cost,
-              interiorDesc: interior.desc,
-              reasonText,
-              badges,
+              floor: t.floor, district: selectedDistrict,
+              commuteA: commuteAMin, commuteB: commuteBMin,
+              interiorCost: interior.cost, interiorDesc: interior.desc,
+              reasonText, badges,
               score: scoreResult.total,
               scoreBudget: scoreResult.scoreBudget,
               scoreCommute: scoreResult.scoreCommute,
@@ -348,7 +314,6 @@ export default function ResultsPage() {
           seen.add(key);
           return true;
         });
-
         setResults(unique.slice(0, 20));
         setExpandedIndex(null);
       } catch (e) {
@@ -363,23 +328,15 @@ export default function ResultsPage() {
   return (
     <main className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-8">
-
         <div className="mb-6 flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-          >
+          <button onClick={() => router.back()} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
             돌아가기
           </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">아파트 추천 결과</h1>
             <p className="text-sm text-slate-500">
               {stationA} 와 {stationB} 중간 근처 역: {nearStation}
-              {dealYmd && (
-                <span className="ml-2 text-xs text-slate-400">
-                  ({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 실거래가 기준)
-                </span>
-              )}
+              {dealYmd && <span className="ml-2 text-xs text-slate-400">({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 실거래가 기준)</span>}
             </p>
           </div>
         </div>
@@ -388,40 +345,20 @@ export default function ResultsPage() {
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">예산 {budget}억</span>
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">현금 {cash}억</span>
-            {loanNeeded > 0 && (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                대출 {loanNeeded.toFixed(1)}억 월 이자 약 {monthlyInterest}만원
-              </span>
-            )}
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              {pyeongPref === "any" ? "평수 무관" : pyeongPref + "평대"}
-            </span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              {buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}
-            </span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-              학군 {school === "yes" ? "중요" : school === "no" ? "무관" : "보통"}
-            </span>
+            {loanNeeded > 0 && <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">대출 {loanNeeded.toFixed(1)}억 월 이자 약 {monthlyInterest}만원</span>}
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{pyeongPref === "any" ? "평수 무관" : pyeongPref + "평대"}</span>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">{buildAge === "new" ? "신축" : buildAge === "recent" ? "준신축" : buildAge === "old" ? "구축" : "연식 무관"}</span>
+            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">학군 {school === "yes" ? "중요" : school === "no" ? "무관" : "보통"}</span>
           </div>
         </div>
 
         <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4">
           <p className="mb-1 text-sm font-semibold text-slate-700">지역 선택</p>
-          <p className="mb-3 text-xs text-slate-400">
-            중간지점({nearStation})에서 가까운 순서로 정렬됐어요
-          </p>
+          <p className="mb-3 text-xs text-slate-400">중간지점({nearStation})에서 가까운 순서로 정렬됐어요</p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
-              <button
-                key={district}
-                onClick={() => setSelectedDistrict(district)}
-                className={
-                  "rounded-full px-3 py-1 text-xs font-semibold transition " +
-                  (selectedDistrict === district
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200")
-                }
-              >
+              <button key={district} onClick={() => setSelectedDistrict(district)}
+                className={"rounded-full px-3 py-1 text-xs font-semibold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
                 {district}
               </button>
             ))}
@@ -433,33 +370,24 @@ export default function ResultsPage() {
         ) : error ? (
           <div className="py-20 text-center text-red-500">{error}</div>
         ) : results.length === 0 ? (
-          <div className="py-20 text-center text-slate-500">
-            해당 조건의 거래 데이터가 없어요. 다른 지역을 선택해보세요.
-          </div>
+          <div className="py-20 text-center text-slate-500">해당 조건의 거래 데이터가 없어요. 다른 지역을 선택해보세요.</div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-slate-500">{selectedDistrict} 총 {results.length}개</p>
             {results.map((item, index) => (
-              <article
-                key={index}
-                className={"rounded-3xl border p-5 " + getScoreBg(item.score)}
-              >
+              <article key={index} className={"rounded-3xl border p-5 " + getScoreBg(item.score)}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-bold text-slate-400">{"#" + (index + 1)}</span>
                       <h3 className="text-lg font-bold text-slate-900">{item.aptNm}</h3>
                     </div>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {selectedDistrict} {item.umdNm} {item.floor}층
-                    </p>
+                    <p className="mt-1 text-sm text-slate-500">{selectedDistrict} {item.umdNm} {item.floor}층</p>
 
                     {item.badges.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {item.badges.map((badge, i) => (
-                          <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-medium text-white">
-                            {badge}
-                          </span>
+                          <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-medium text-white">{badge}</span>
                         ))}
                       </div>
                     )}
@@ -494,10 +422,8 @@ export default function ResultsPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                      className="mt-3 text-xs font-semibold text-slate-400 hover:text-slate-700"
-                    >
+                    <button onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                      className="mt-3 text-xs font-semibold text-slate-400 hover:text-slate-700">
                       {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
                     </button>
 
@@ -514,9 +440,7 @@ export default function ResultsPage() {
                         <div className="mt-4 grid grid-cols-2 gap-3">
                           <div className="rounded-xl bg-slate-50 p-3 text-center">
                             <p className="text-xs text-slate-500">예산 적합도</p>
-                            <p className="mt-1 font-bold text-slate-900">
-                              {item.priceEok <= budget ? "예산 내" : "초과"}
-                            </p>
+                            <p className="mt-1 font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
                             <p className="text-xs text-slate-500">{item.priceEok.toFixed(1)}억 / 예산 {budget}억</p>
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3 text-center">
@@ -531,12 +455,8 @@ export default function ResultsPage() {
                           </div>
                           <div className="rounded-xl bg-slate-50 p-3 text-center">
                             <p className="text-xs text-slate-500">대출</p>
-                            <p className="mt-1 font-bold text-slate-900">
-                              {loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {loanNeeded > 0 ? "월 이자 약 " + monthlyInterest + "만원" : "현금으로 가능"}
-                            </p>
+                            <p className="mt-1 font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
+                            <p className="text-xs text-slate-500">{loanNeeded > 0 ? "월 이자 약 " + monthlyInterest + "만원" : "현금으로 가능"}</p>
                           </div>
                         </div>
                       </div>
@@ -545,9 +465,7 @@ export default function ResultsPage() {
 
                   <div className="text-center min-w-[60px]">
                     <p className="text-xs font-semibold text-slate-500">추천 점수</p>
-                    <p className={"text-3xl font-bold " + getScoreColor(item.score)}>
-                      {item.score}
-                    </p>
+                    <p className={"text-3xl font-bold " + getScoreColor(item.score)}>{item.score}</p>
                     <p className="text-xs text-slate-400">/ 100</p>
                   </div>
                 </div>
@@ -557,5 +475,17 @@ export default function ResultsPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-slate-500">로딩 중...</p>
+      </div>
+    }>
+      <ResultsPageInner />
+    </Suspense>
   );
 }
