@@ -441,11 +441,13 @@ function ResultsPageInner() {
                       {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
                     </button>
                     
-                      href={"https://search.naver.com/search.naver?query=" + encodeURIComponent(item.aptNm + " " + selectedDistrict + " 아파트")}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition">
-                      네이버 검색
+                    href={"https://search.naver.com/search.naver?query=" + encodeURIComponent(item.aptNm + " " + selectedDistrict + " 아파트")}
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center justify-center rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition"
+>
+  네이버 검색
+</a>
                     </a>
                   </div>
 
