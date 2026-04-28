@@ -24,6 +24,7 @@ type AptResult = {
   interiorDesc: string;
   reasonText: string;
   badges: string[];
+  liked: boolean;
 };
 
 const LAWD_CODES: Record<string, { code: string; lat: number; lng: number }> = {
@@ -131,12 +132,7 @@ function getInteriorInfo(buildYear: string, currentYear: number) {
   return { cost: "4,000~7,000만원", desc: "전체 리모델링을 고려해야 해요." };
 }
 
-function getReasonText(
-  priceEok: number, budget: number,
-  commuteA: number, commuteB: number,
-  stationA: string, stationB: string,
-  pyeong: number, buildYear: string, currentYear: number
-): string {
+function getReasonText(priceEok: number, budget: number, commuteA: number, commuteB: number, stationA: string, stationB: string, pyeong: number, buildYear: string, currentYear: number): string {
   const age = currentYear - Number(buildYear);
   const totalCommute = commuteA + commuteB;
   const underBudget = priceEok <= budget;
@@ -149,11 +145,7 @@ function getReasonText(
   return "중간지점 기준 출퇴근 합산 " + totalCommute + "분으로 균형 잡힌 매물이에요.";
 }
 
-function getBadges(
-  priceEok: number, budget: number,
-  commuteA: number, commuteB: number,
-  age: number, pyeong: number, school: string, district: string
-): string[] {
+function getBadges(priceEok: number, budget: number, commuteA: number, commuteB: number, age: number, pyeong: number, school: string, district: string): string[] {
   const badges: string[] = [];
   if (priceEok <= budget * 0.9) badges.push("예산 여유");
   else if (priceEok <= budget) badges.push("예산 내");
@@ -196,6 +188,26 @@ function ScoreBar({ label, score, max }: { label: string; score: number; max: nu
   );
 }
 
+const LIKED_KEY = "apt-liked";
+
+function getLikedIds(): string[] {
+  try {
+    const raw = localStorage.getItem(LIKED_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function toggleLiked(id: string): string[] {
+  const current = getLikedIds();
+  const next = current.includes(id)
+    ? current.filter((x) => x !== id)
+    : [...current, id];
+  localStorage.setItem(LIKED_KEY, JSON.stringify(next));
+  return next;
+}
+
 function ResultsPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -216,10 +228,7 @@ function ResultsPageInner() {
   const monthlyInterest = Math.round((loanNeeded * 100000000 * 0.035) / 12 / 10000);
 
   const sortedDistricts = Object.entries(LAWD_CODES)
-    .map(([name, info]) => ({
-      name, ...info,
-      dist: midLat && midLng ? haversineKm(midLat, midLng, info.lat, info.lng) : 999,
-    }))
+    .map(([name, info]) => ({ name, ...info, dist: midLat && midLng ? haversineKm(midLat, midLng, info.lat, info.lng) : 999 }))
     .sort((a, b) => a.dist - b.dist)
     .map((d) => d.name);
 
@@ -229,12 +238,24 @@ function ResultsPageInner() {
   const [selectedDistrict, setSelectedDistrict] = useState(sortedDistricts[0]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [dealYmd, setDealYmd] = useState("");
+  const [likedIds, setLikedIds] = useState<string[]>([]);
+  const [showLikedOnly, setShowLikedOnly] = useState(false);
 
-  function calcScore(
-    priceEok: number, pyeong: number,
-    buildYear: string, district: string,
-    commuteA: number, commuteB: number
-  ) {
+  useEffect(() => {
+    setLikedIds(getLikedIds());
+  }, []);
+
+  function getLikeId(item: AptResult) {
+    return item.aptNm + "-" + item.district + "-" + item.pyeong;
+  }
+
+  function handleLike(item: AptResult) {
+    const id = getLikeId(item);
+    const next = toggleLiked(id);
+    setLikedIds(next);
+  }
+
+  function calcScore(priceEok: number, pyeong: number, buildYear: string, district: string, commuteA: number, commuteB: number) {
     if (pyeongPref !== "any") {
       const prefNum = Number(pyeongPref);
       if (Math.abs(pyeong - prefNum) > 20) return null;
@@ -253,9 +274,8 @@ function ResultsPageInner() {
     else scoreCommute = 5;
 
     let scorePyeong = 0;
-    if (pyeongPref === "any") {
-      scorePyeong = 15;
-    } else {
+    if (pyeongPref === "any") { scorePyeong = 15; }
+    else {
       const prefNum = Number(pyeongPref);
       if (pyeong >= prefNum && pyeong < prefNum + 10) scorePyeong = 20;
       else if (Math.abs(pyeong - prefNum) <= 10) scorePyeong = 12;
@@ -289,10 +309,7 @@ function ResultsPageInner() {
         const res = await fetch("/api/trades?lawdCd=" + lawdCd);
         const data = await res.json();
         if (data.dealYmd) setDealYmd(data.dealYmd);
-        if (!data.items || data.items.length === 0) {
-          setResults([]);
-          return;
-        }
+        if (!data.items || data.items.length === 0) { setResults([]); return; }
 
         const commuteAMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationA);
         const commuteBMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationB);
@@ -315,7 +332,7 @@ function ResultsPageInner() {
               floor: t.floor, district: selectedDistrict,
               commuteA: commuteAMin, commuteB: commuteBMin,
               interiorCost: interior.cost, interiorDesc: interior.desc,
-              reasonText, badges,
+              reasonText, badges, liked: false,
               score: scoreResult.total,
               scoreBudget: scoreResult.scoreBudget,
               scoreCommute: scoreResult.scoreCommute,
@@ -350,26 +367,28 @@ function ResultsPageInner() {
     window.open("https://search.naver.com/search.naver?query=" + query, "_blank");
   };
 
+  const openAuction = (aptNm: string, district: string) => {
+    const query = encodeURIComponent(aptNm + " " + district);
+    window.open("https://www.courtauction.go.kr/pgj/pgj100/pgj100_001_new.jsp?searchWord=" + query, "_blank");
+  };
+
+  const displayResults = showLikedOnly
+    ? results.filter((item) => likedIds.includes(getLikeId(item)))
+    : results;
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       <div className="mx-auto max-w-2xl px-4 py-6">
 
         <div className="mb-5 flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold"
-          >
+          <button onClick={() => router.back()} className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold">
             ←
           </button>
           <div>
             <h1 className="text-xl font-extrabold text-slate-900">추천 결과</h1>
             <p className="text-xs font-medium text-slate-500">
               {stationA} ↔ {stationB} · 중간: {nearStation}
-              {dealYmd && (
-                <span className="ml-1 text-slate-400">
-                  ({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)
-                </span>
-              )}
+              {dealYmd && <span className="ml-1 text-slate-400">({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)</span>}
             </p>
           </div>
         </div>
@@ -395,11 +414,8 @@ function ResultsPageInner() {
           <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
-              <button
-                key={district}
-                onClick={() => setSelectedDistrict(district)}
-                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}
-              >
+              <button key={district} onClick={() => setSelectedDistrict(district)}
+                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
                 {district}
               </button>
             ))}
@@ -413,126 +429,147 @@ function ResultsPageInner() {
           </div>
         ) : error ? (
           <div className="py-20 text-center text-red-500 font-medium">{error}</div>
-        ) : results.length === 0 ? (
-          <div className="py-20 text-center rounded-2xl bg-white border border-slate-100 p-8">
-            <p className="text-2xl mb-3">🔍</p>
-            <p className="text-slate-700 font-bold mb-1">조건에 맞는 매물이 없어요</p>
-            <p className="text-slate-400 text-sm">다른 지역을 선택하거나 평수 조건을 변경해보세요.</p>
-          </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm font-bold text-slate-700">{selectedDistrict} · 총 {results.length}개</p>
-            {results.map((item, index) => (
-              <article key={index} className={"rounded-2xl border-2 overflow-hidden " + getScoreBg(item.score)}>
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
-                        <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-slate-700">{selectedDistrict} · 총 {results.length}개</p>
+              <button
+                onClick={() => setShowLikedOnly(!showLikedOnly)}
+                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (showLikedOnly ? "bg-red-500 text-white" : "bg-white border border-slate-200 text-slate-700")}
+              >
+                {showLikedOnly ? "전체 보기" : "하트 목록 " + likedIds.length + "개"}
+              </button>
+            </div>
+
+            {displayResults.length === 0 ? (
+              <div className="py-20 text-center rounded-2xl bg-white border border-slate-100 p-8">
+                <p className="text-2xl mb-3">🔍</p>
+                <p className="text-slate-700 font-bold mb-1">
+                  {showLikedOnly ? "저장한 아파트가 없어요" : "조건에 맞는 매물이 없어요"}
+                </p>
+                <p className="text-slate-400 text-sm">
+                  {showLikedOnly ? "아파트 카드의 하트 버튼을 눌러 저장해보세요" : "다른 지역을 선택하거나 평수 조건을 변경해보세요."}
+                </p>
+              </div>
+            ) : (
+              displayResults.map((item, index) => (
+                <article key={index} className={"rounded-2xl border-2 overflow-hidden " + getScoreBg(item.score)}>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
+                          <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
+                          <button
+                            onClick={() => handleLike(item)}
+                            className="ml-auto text-xl"
+                          >
+                            {likedIds.includes(getLikeId(item)) ? "❤️" : "🤍"}
+                          </button>
+                        </div>
+                        <p className="text-xs font-medium text-slate-500">{selectedDistrict} {item.umdNm} · {item.floor}층</p>
+                        {item.badges.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.badges.map((badge, i) => (
+                              <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{badge}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <p className="text-xs font-medium text-slate-500">
-                        {selectedDistrict} {item.umdNm} · {item.floor}층
-                      </p>
-                      {item.badges.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {item.badges.map((badge, i) => (
-                            <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
-                              {badge}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-center bg-white rounded-xl p-3 shadow-sm min-w-[64px]">
-                      <p className="text-xs font-bold text-slate-500">점수</p>
-                      <p className={"text-2xl font-extrabold " + getScoreColor(item.score)}>{item.score}</p>
-                      <p className="text-xs text-slate-400">/100</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.priceEok.toFixed(1)}억</span>
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.pyeong}평</span>
-                    <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.buildYear}년식</span>
-                  </div>
-
-                  <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
-                    <p className="text-xs font-bold text-white">
-                      최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)
-                    </p>
-                  </div>
-
-                  <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
-                    <p className="text-xs font-medium text-amber-800">{item.reasonText}</p>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div className="rounded-xl bg-white border border-slate-200 p-3">
-                      <p className="text-xs font-bold text-slate-500 mb-1">출퇴근 예상</p>
-                      <p className="text-sm font-bold text-slate-900">남편 약 {item.commuteA}분</p>
-                      <p className="text-sm font-bold text-slate-900">아내 약 {item.commuteB}분</p>
-                      <p className="text-xs font-medium text-slate-400 mt-1">합산 {item.commuteA + item.commuteB}분/일</p>
-                    </div>
-                    <div className="rounded-xl bg-white border border-slate-200 p-3">
-                      <p className="text-xs font-bold text-slate-500 mb-1">예상 인테리어</p>
-                      <p className="text-sm font-bold text-slate-900">{item.interiorCost}</p>
-                      <p className="text-xs font-medium text-slate-400 mt-1">{item.interiorDesc}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                      className="rounded-xl border-2 border-slate-200 bg-white py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
-                    >
-                      {expandedIndex === index ? "간단히 보기" : "점수 상세 보기"}
-                    </button>
-                    <button
-                      onClick={() => openNaver(item.aptNm, selectedDistrict)}
-                      className="rounded-xl bg-green-500 py-2.5 text-sm font-bold text-white hover:bg-green-600 transition"
-                    >
-                      네이버 검색
-                    </button>
-                  </div>
-
-                  {expandedIndex === index && (
-                    <div className="mt-3 rounded-xl bg-white border border-slate-200 p-4">
-                      <p className="text-sm font-bold text-slate-900 mb-3">점수 상세 분석</p>
-                      <div className="space-y-3">
-                        <ScoreBar label="예산 적합도 (최대 35점)" score={item.scoreBudget} max={35} />
-                        <ScoreBar label="출퇴근 거리 (최대 30점)" score={item.scoreCommute} max={30} />
-                        <ScoreBar label="면적 적합도 (최대 20점)" score={item.scorePyeong} max={20} />
-                        <ScoreBar label="연식 적합도 (최대 10점)" score={item.scoreAge} max={10} />
-                        <ScoreBar label="학군 (최대 5점)" score={item.scoreSchool} max={5} />
-                      </div>
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        <div className="rounded-xl bg-slate-50 p-3 text-center">
-                          <p className="text-xs font-medium text-slate-500">예산</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
-                          <p className="text-xs text-slate-400">{item.priceEok.toFixed(1)}억 / {budget}억</p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-center">
-                          <p className="text-xs font-medium text-slate-500">연식</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{currentYear - Number(item.buildYear)}년차</p>
-                          <p className="text-xs text-slate-400">{item.buildYear}년 준공</p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-center">
-                          <p className="text-xs font-medium text-slate-500">면적</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{item.pyeong}평</p>
-                          <p className="text-xs text-slate-400">선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}</p>
-                        </div>
-                        <div className="rounded-xl bg-slate-50 p-3 text-center">
-                          <p className="text-xs font-medium text-slate-500">대출</p>
-                          <p className="mt-1 text-sm font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
-                          <p className="text-xs text-slate-400">{loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}</p>
-                        </div>
+                      <div className="text-center bg-white rounded-xl p-3 shadow-sm min-w-[64px]">
+                        <p className="text-xs font-bold text-slate-500">점수</p>
+                        <p className={"text-2xl font-extrabold " + getScoreColor(item.score)}>{item.score}</p>
+                        <p className="text-xs text-slate-400">/100</p>
                       </div>
                     </div>
-                  )}
-                </div>
-              </article>
-            ))}
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.priceEok.toFixed(1)}억</span>
+                      <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.pyeong}평</span>
+                      <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 text-sm font-bold text-slate-900">{item.buildYear}년식</span>
+                    </div>
+
+                    <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
+                      <p className="text-xs font-bold text-white">최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)</p>
+                    </div>
+
+                    <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+                      <p className="text-xs font-medium text-amber-800">{item.reasonText}</p>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <div className="rounded-xl bg-white border border-slate-200 p-3">
+                        <p className="text-xs font-bold text-slate-500 mb-1">출퇴근 예상</p>
+                        <p className="text-sm font-bold text-slate-900">남편 약 {item.commuteA}분</p>
+                        <p className="text-sm font-bold text-slate-900">아내 약 {item.commuteB}분</p>
+                        <p className="text-xs font-medium text-slate-400 mt-1">합산 {item.commuteA + item.commuteB}분/일</p>
+                      </div>
+                      <div className="rounded-xl bg-white border border-slate-200 p-3">
+                        <p className="text-xs font-bold text-slate-500 mb-1">예상 인테리어</p>
+                        <p className="text-sm font-bold text-slate-900">{item.interiorCost}</p>
+                        <p className="text-xs font-medium text-slate-400 mt-1">{item.interiorDesc}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                        className="rounded-xl border-2 border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        {expandedIndex === index ? "간단히" : "점수 상세"}
+                      </button>
+                      <button
+                        onClick={() => openNaver(item.aptNm, selectedDistrict)}
+                        className="rounded-xl bg-green-500 py-2.5 text-xs font-bold text-white hover:bg-green-600 transition"
+                      >
+                        네이버
+                      </button>
+                      <button
+                        onClick={() => openAuction(item.aptNm, selectedDistrict)}
+                        className="rounded-xl bg-orange-500 py-2.5 text-xs font-bold text-white hover:bg-orange-600 transition"
+                      >
+                        경매조회
+                      </button>
+                    </div>
+
+                    {expandedIndex === index && (
+                      <div className="mt-3 rounded-xl bg-white border border-slate-200 p-4">
+                        <p className="text-sm font-bold text-slate-900 mb-3">점수 상세 분석</p>
+                        <div className="space-y-3">
+                          <ScoreBar label="예산 적합도 (최대 35점)" score={item.scoreBudget} max={35} />
+                          <ScoreBar label="출퇴근 거리 (최대 30점)" score={item.scoreCommute} max={30} />
+                          <ScoreBar label="면적 적합도 (최대 20점)" score={item.scorePyeong} max={20} />
+                          <ScoreBar label="연식 적합도 (최대 10점)" score={item.scoreAge} max={10} />
+                          <ScoreBar label="학군 (최대 5점)" score={item.scoreSchool} max={5} />
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          <div className="rounded-xl bg-slate-50 p-3 text-center">
+                            <p className="text-xs font-medium text-slate-500">예산</p>
+                            <p className="mt-1 text-sm font-bold text-slate-900">{item.priceEok <= budget ? "예산 내" : "초과"}</p>
+                            <p className="text-xs text-slate-400">{item.priceEok.toFixed(1)}억 / {budget}억</p>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 p-3 text-center">
+                            <p className="text-xs font-medium text-slate-500">연식</p>
+                            <p className="mt-1 text-sm font-bold text-slate-900">{currentYear - Number(item.buildYear)}년차</p>
+                            <p className="text-xs text-slate-400">{item.buildYear}년 준공</p>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 p-3 text-center">
+                            <p className="text-xs font-medium text-slate-500">면적</p>
+                            <p className="mt-1 text-sm font-bold text-slate-900">{item.pyeong}평</p>
+                            <p className="text-xs text-slate-400">선호 {pyeongPref === "any" ? "무관" : pyeongPref + "평대"}</p>
+                          </div>
+                          <div className="rounded-xl bg-slate-50 p-3 text-center">
+                            <p className="text-xs font-medium text-slate-500">대출</p>
+                            <p className="mt-1 text-sm font-bold text-slate-900">{loanNeeded > 0 ? loanNeeded.toFixed(1) + "억" : "없음"}</p>
+                            <p className="text-xs text-slate-400">{loanNeeded > 0 ? "월 " + monthlyInterest + "만원" : "현금 가능"}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))
+            )}
           </div>
         )}
       </div>
@@ -542,16 +579,14 @@ function ResultsPageInner() {
 
 export default function ResultsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-500 font-medium">로딩 중...</p>
-          </div>
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-500 font-medium">로딩 중...</p>
         </div>
-      }
-    >
+      </div>
+    }>
       <ResultsPageInner />
     </Suspense>
   );
