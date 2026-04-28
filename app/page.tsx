@@ -7,16 +7,11 @@ import { findStation, getMidpoint, getNearestStation, estimateCommuteMinutes } f
 export default function HomePage() {
   const router = useRouter();
 
-  // 직장역
   const [stationA, setStationA] = useState("강남역");
   const [stationB, setStationB] = useState("도봉역");
-
-  // 예산
   const [budget, setBudget] = useState("10");
   const [cash, setCash] = useState("5");
   const [monthlyRepay, setMonthlyRepay] = useState("100");
-
-  // 집 조건
   const [household, setHousehold] = useState("family");
   const [pyeong, setPyeong] = useState("30");
   const [buildAge, setBuildAge] = useState("any");
@@ -32,11 +27,10 @@ export default function HomePage() {
   const commuteB = foundB && nearestStation ? estimateCommuteMinutes(nearestStation, foundB) : null;
   const totalCommute = commuteA && commuteB ? commuteA + commuteB : null;
 
-  // 대출 계산
   const budgetNum = Number(budget) || 0;
   const cashNum = Number(cash) || 0;
   const loanNeeded = Math.max(0, budgetNum - cashNum);
-  const monthlyInterest = Math.round((loanNeeded * 100000000 * 0.035) / 12 / 10000); // 금리 3.5% 기준 월 이자 (만원)
+  const monthlyInterest = Math.round((loanNeeded * 100000000 * 0.035) / 12 / 10000);
 
   const handleSearch = () => {
     if (!foundA || !foundB) return;
@@ -47,67 +41,75 @@ export default function HomePage() {
       midLng: midpoint?.lng.toString() ?? "",
       nearStation: nearestStation?.name ?? "",
     });
-    router.push(`/results?${params.toString()}`);
+    router.push("/results?" + params.toString());
   };
 
+  const inputClass = "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400";
+  const selectClass = "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+  const labelClass = "mb-2 block text-sm font-bold text-slate-700";
+
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-3xl px-4 py-10">
+    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+      <div className="mx-auto max-w-2xl px-4 py-8">
 
         {/* 헤더 */}
         <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-slate-900">🏠 아파트 추천</h1>
-          <p className="mt-3 text-slate-500">
-            부부 직장역 기준 중간지점으로 최적 아파트를 찾아드려요
-          </p>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 rounded-2xl mb-4">
+            <span className="text-3xl">🏠</span>
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">아파트 추천</h1>
+          <p className="mt-2 text-base text-slate-500 font-medium">부부 직장역 기준 중간지점으로 최적 아파트를 찾아드려요</p>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4">
 
           {/* STEP 1 - 직장역 */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold text-slate-900">📍 STEP 1 · 직장역</h2>
-            <div className="grid gap-4 md:grid-cols-2">
+          <section className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold">1</span>
+              <h2 className="text-base font-bold text-slate-900">직장역 입력</h2>
+            </div>
+            <div className="grid gap-3 grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">남편 직장역</label>
+                <label className={labelClass}>남편 직장역</label>
                 <input
                   value={stationA}
                   onChange={(e) => setStationA(e.target.value)}
                   placeholder="예: 강남역"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500"
+                  className={inputClass}
                 />
                 {foundA ? (
-                  <p className="mt-1 text-xs text-emerald-600">✓ {foundA.name} ({foundA.lines.join(", ")})</p>
+                  <p className="mt-1.5 text-xs font-semibold text-emerald-600">✓ {foundA.name}</p>
                 ) : stationA ? (
-                  <p className="mt-1 text-xs text-red-500">역을 찾지 못했어요</p>
+                  <p className="mt-1.5 text-xs font-semibold text-red-500">역을 찾지 못했어요</p>
                 ) : null}
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">아내 직장역</label>
+                <label className={labelClass}>아내 직장역</label>
                 <input
                   value={stationB}
                   onChange={(e) => setStationB(e.target.value)}
                   placeholder="예: 도봉역"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500"
+                  className={inputClass}
                 />
                 {foundB ? (
-                  <p className="mt-1 text-xs text-emerald-600">✓ {foundB.name} ({foundB.lines.join(", ")})</p>
+                  <p className="mt-1.5 text-xs font-semibold text-emerald-600">✓ {foundB.name}</p>
                 ) : stationB ? (
-                  <p className="mt-1 text-xs text-red-500">역을 찾지 못했어요</p>
+                  <p className="mt-1.5 text-xs font-semibold text-red-500">역을 찾지 못했어요</p>
                 ) : null}
               </div>
             </div>
 
             {nearestStation && (
-              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                <p className="text-sm font-semibold text-blue-900">📊 중간지점 계산 결과</p>
-                <p className="mt-2 text-sm text-blue-800">
-                  추천 거주지역 근처 역: <span className="font-bold">{nearestStation.name}</span>
+              <div className="mt-4 rounded-xl bg-blue-50 border border-blue-100 p-4">
+                <p className="text-xs font-bold text-blue-700 mb-1">중간지점 계산 결과</p>
+                <p className="text-sm font-bold text-blue-900">
+                  추천 거주지역: <span className="text-blue-600">{nearestStation.name}</span> 근처
                 </p>
                 {totalCommute && (
-                  <p className="mt-1 text-sm text-blue-800">
-                    예상 총 출퇴근: <span className="font-bold">하루 {totalCommute}분</span>
-                    <span className="ml-2 text-xs text-blue-600">(남편 {commuteA}분 + 아내 {commuteB}분)</span>
+                  <p className="text-sm text-blue-800 mt-1">
+                    예상 총 출퇴근 <span className="font-bold">{totalCommute}분/일</span>
+                    <span className="text-xs text-blue-600 ml-2">(남편 {commuteA}분 + 아내 {commuteB}분)</span>
                   </p>
                 )}
               </div>
@@ -115,54 +117,42 @@ export default function HomePage() {
           </section>
 
           {/* STEP 2 - 예산 */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold text-slate-900">💰 STEP 2 · 예산</h2>
-            <div className="grid gap-4 md:grid-cols-3">
+          <section className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold">2</span>
+              <h2 className="text-base font-bold text-slate-900">예산</h2>
+            </div>
+            <div className="grid gap-3 grid-cols-3">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">총 예산 (억)</label>
-                <input
-                  value={budget}
-                  onChange={(e) => setBudget(e.target.value)}
-                  type="number" step="0.5"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500"
-                />
+                <label className={labelClass}>총 예산 (억)</label>
+                <input value={budget} onChange={(e) => setBudget(e.target.value)} type="number" step="0.5" placeholder="10" className={inputClass} />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">현금 보유 (억)</label>
-                <input
-                  value={cash}
-                  onChange={(e) => setCash(e.target.value)}
-                  type="number" step="0.5"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500"
-                />
+                <label className={labelClass}>현금 보유 (억)</label>
+                <input value={cash} onChange={(e) => setCash(e.target.value)} type="number" step="0.5" placeholder="5" className={inputClass} />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">월 상환 가능 (만원)</label>
-                <input
-                  value={monthlyRepay}
-                  onChange={(e) => setMonthlyRepay(e.target.value)}
-                  type="number" step="10"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500"
-                />
+                <label className={labelClass}>월 상환 (만원)</label>
+                <input value={monthlyRepay} onChange={(e) => setMonthlyRepay(e.target.value)} type="number" step="10" placeholder="100" className={inputClass} />
               </div>
             </div>
 
             {loanNeeded > 0 && (
-              <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 p-4">
-                <p className="text-sm font-semibold text-amber-900">📋 대출 계산 (금리 3.5% 기준)</p>
-                <div className="mt-2 grid grid-cols-3 gap-3 text-center">
+              <div className="mt-3 rounded-xl bg-amber-50 border border-amber-100 p-4">
+                <p className="text-xs font-bold text-amber-700 mb-2">대출 계산 (금리 3.5% 기준)</p>
+                <div className="grid grid-cols-3 gap-3 text-center">
                   <div>
-                    <p className="text-xs text-amber-700">필요 대출</p>
-                    <p className="mt-1 text-lg font-bold text-amber-900">{loanNeeded.toFixed(1)}억</p>
+                    <p className="text-xs text-amber-600 font-medium">필요 대출</p>
+                    <p className="text-lg font-extrabold text-amber-900">{loanNeeded.toFixed(1)}억</p>
                   </div>
                   <div>
-                    <p className="text-xs text-amber-700">월 예상 이자</p>
-                    <p className="mt-1 text-lg font-bold text-amber-900">{monthlyInterest.toLocaleString()}만원</p>
+                    <p className="text-xs text-amber-600 font-medium">월 예상 이자</p>
+                    <p className="text-lg font-extrabold text-amber-900">{monthlyInterest.toLocaleString()}만원</p>
                   </div>
                   <div>
-                    <p className="text-xs text-amber-700">상환 여유</p>
-                    <p className={`mt-1 text-lg font-bold ${Number(monthlyRepay) >= monthlyInterest ? "text-emerald-600" : "text-red-500"}`}>
-                      {Number(monthlyRepay) >= monthlyInterest ? "✓ 가능" : "⚠ 빠듯함"}
+                    <p className="text-xs text-amber-600 font-medium">상환 여유</p>
+                    <p className={"text-lg font-extrabold " + (Number(monthlyRepay) >= monthlyInterest ? "text-emerald-600" : "text-red-500")}>
+                      {Number(monthlyRepay) >= monthlyInterest ? "여유" : "빠듯"}
                     </p>
                   </div>
                 </div>
@@ -171,22 +161,23 @@ export default function HomePage() {
           </section>
 
           {/* STEP 3 - 집 조건 */}
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-bold text-slate-900">🏡 STEP 3 · 집 조건</h2>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <section className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold">3</span>
+              <h2 className="text-base font-bold text-slate-900">집 조건</h2>
+            </div>
+            <div className="grid gap-3 grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">가구 형태</label>
-                <select value={household} onChange={(e) => setHousehold(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500">
+                <label className={labelClass}>가구 형태</label>
+                <select value={household} onChange={(e) => setHousehold(e.target.value)} className={selectClass}>
                   <option value="single">1인 가구</option>
                   <option value="couple">부부 2인</option>
                   <option value="family">자녀 포함 가족</option>
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">선호 평수</label>
-                <select value={pyeong} onChange={(e) => setPyeong(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500">
+                <label className={labelClass}>선호 평수</label>
+                <select value={pyeong} onChange={(e) => setPyeong(e.target.value)} className={selectClass}>
                   <option value="20">20평대</option>
                   <option value="30">30평대</option>
                   <option value="40">40평대</option>
@@ -194,39 +185,35 @@ export default function HomePage() {
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">연식 선호</label>
-                <select value={buildAge} onChange={(e) => setBuildAge(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500">
+                <label className={labelClass}>연식 선호</label>
+                <select value={buildAge} onChange={(e) => setBuildAge(e.target.value)} className={selectClass}>
                   <option value="new">신축 (5년 이내)</option>
                   <option value="recent">준신축 (10년 이내)</option>
                   <option value="any">상관없음</option>
-                  <option value="old">구축 선호 (가성비)</option>
+                  <option value="old">구축 (가성비)</option>
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">학군 중요도</label>
-                <select value={school} onChange={(e) => setSchool(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500">
+                <label className={labelClass}>학군 중요도</label>
+                <select value={school} onChange={(e) => setSchool(e.target.value)} className={selectClass}>
                   <option value="yes">중요함</option>
                   <option value="any">보통</option>
                   <option value="no">안 봄</option>
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">입주 시기</label>
-                <select value={moveIn} onChange={(e) => setMoveIn(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500">
+                <label className={labelClass}>입주 시기</label>
+                <select value={moveIn} onChange={(e) => setMoveIn(e.target.value)} className={selectClass}>
                   <option value="immediate">즉시 입주</option>
                   <option value="6months">6개월 이내</option>
                   <option value="any">상관없음</option>
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">인테리어 상태</label>
-                <select value={interior} onChange={(e) => setInterior(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-slate-500">
+                <label className={labelClass}>인테리어 상태</label>
+                <select value={interior} onChange={(e) => setInterior(e.target.value)} className={selectClass}>
                   <option value="any">상관없음</option>
-                  <option value="fresh">깔끔한 상태 선호</option>
+                  <option value="fresh">깔끔한 상태</option>
                   <option value="ok">부분 수리 가능</option>
                   <option value="reno">전체 리모델링 가능</option>
                 </select>
@@ -238,9 +225,9 @@ export default function HomePage() {
           <button
             onClick={handleSearch}
             disabled={!foundA || !foundB}
-            className="w-full rounded-2xl bg-slate-900 py-5 text-base font-bold text-white transition hover:bg-slate-700 disabled:bg-slate-300"
+            className="w-full rounded-2xl bg-slate-900 py-5 text-base font-extrabold text-white shadow-lg transition hover:bg-slate-700 active:scale-95 disabled:bg-slate-300 disabled:shadow-none"
           >
-            {!foundA || !foundB ? "역 이름을 확인해주세요" : "🔍 아파트 추천 받기"}
+            {!foundA || !foundB ? "역 이름을 확인해주세요" : "아파트 추천 받기"}
           </button>
 
         </div>
