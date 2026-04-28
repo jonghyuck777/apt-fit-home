@@ -24,7 +24,6 @@ type AptResult = {
   interiorDesc: string;
   reasonText: string;
   badges: string[];
-  liked: boolean;
 };
 
 const LAWD_CODES: Record<string, { code: string; lat: number; lng: number }> = {
@@ -274,8 +273,9 @@ function ResultsPageInner() {
     else scoreCommute = 5;
 
     let scorePyeong = 0;
-    if (pyeongPref === "any") { scorePyeong = 15; }
-    else {
+    if (pyeongPref === "any") {
+      scorePyeong = 15;
+    } else {
       const prefNum = Number(pyeongPref);
       if (pyeong >= prefNum && pyeong < prefNum + 10) scorePyeong = 20;
       else if (Math.abs(pyeong - prefNum) <= 10) scorePyeong = 12;
@@ -309,7 +309,10 @@ function ResultsPageInner() {
         const res = await fetch("/api/trades?lawdCd=" + lawdCd);
         const data = await res.json();
         if (data.dealYmd) setDealYmd(data.dealYmd);
-        if (!data.items || data.items.length === 0) { setResults([]); return; }
+        if (!data.items || data.items.length === 0) {
+          setResults([]);
+          return;
+        }
 
         const commuteAMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationA);
         const commuteBMin = estimateCommute(districtInfo.lat, districtInfo.lng, stationB);
@@ -332,7 +335,7 @@ function ResultsPageInner() {
               floor: t.floor, district: selectedDistrict,
               commuteA: commuteAMin, commuteB: commuteBMin,
               interiorCost: interior.cost, interiorDesc: interior.desc,
-              reasonText, badges, liked: false,
+              reasonText, badges,
               score: scoreResult.total,
               scoreBudget: scoreResult.scoreBudget,
               scoreCommute: scoreResult.scoreCommute,
@@ -362,18 +365,18 @@ function ResultsPageInner() {
     load();
   }, [selectedDistrict]);
 
-  const openNaver = (aptNm: string, district: string) => {
+  function openNaver(aptNm: string, district: string) {
     const query = encodeURIComponent(aptNm + " " + district + " 아파트");
     window.open("https://search.naver.com/search.naver?query=" + query, "_blank");
-  };
+  }
 
-  const openAuction = (aptNm: string, district: string) => {
-    const query = encodeURIComponent(aptNm + " " + district);
-    window.open("https://www.courtauction.go.kr/pgj/pgj100/pgj100_001_new.jsp?searchWord=" + query, "_blank");
-  };
+  function openAuction(aptNm: string, district: string) {
+    const query = encodeURIComponent(aptNm + " " + district + " 경매");
+    window.open("https://search.naver.com/search.naver?query=" + query, "_blank");
+  }
 
   const displayResults = showLikedOnly
-    ? results.filter((item) => likedIds.includes(getLikeId(item)))
+    ? results.filter((item) => likedIds.includes(item.aptNm + "-" + item.district + "-" + item.pyeong))
     : results;
 
   return (
@@ -381,14 +384,21 @@ function ResultsPageInner() {
       <div className="mx-auto max-w-2xl px-4 py-6">
 
         <div className="mb-5 flex items-center gap-3">
-          <button onClick={() => router.back()} className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold">
-            ←
+          <button
+            onClick={() => router.back()}
+            className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold"
+          >
+            뒤로
           </button>
           <div>
             <h1 className="text-xl font-extrabold text-slate-900">추천 결과</h1>
             <p className="text-xs font-medium text-slate-500">
               {stationA} ↔ {stationB} · 중간: {nearStation}
-              {dealYmd && <span className="ml-1 text-slate-400">({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)</span>}
+              {dealYmd && (
+                <span className="ml-1 text-slate-400">
+                  ({dealYmd.slice(0, 4)}년 {dealYmd.slice(4)}월 기준)
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -398,7 +408,7 @@ function ResultsPageInner() {
           <span className="rounded-full bg-slate-900 text-white px-3 py-1 text-xs font-bold">현금 {cash}억</span>
           {loanNeeded > 0 && (
             <span className="rounded-full bg-amber-500 text-white px-3 py-1 text-xs font-bold">
-              대출 {loanNeeded.toFixed(1)}억 · 월 {monthlyInterest}만원
+              대출 {loanNeeded.toFixed(1)}억 월 {monthlyInterest}만원
             </span>
           )}
           <span className="rounded-full bg-slate-700 text-white px-3 py-1 text-xs font-bold">
@@ -414,8 +424,11 @@ function ResultsPageInner() {
           <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
-              <button key={district} onClick={() => setSelectedDistrict(district)}
-                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
+              <button
+                key={district}
+                onClick={() => setSelectedDistrict(district)}
+                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}
+              >
                 {district}
               </button>
             ))}
@@ -437,18 +450,17 @@ function ResultsPageInner() {
                 onClick={() => setShowLikedOnly(!showLikedOnly)}
                 className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (showLikedOnly ? "bg-red-500 text-white" : "bg-white border border-slate-200 text-slate-700")}
               >
-                {showLikedOnly ? "전체 보기" : "하트 목록 " + likedIds.length + "개"}
+                {showLikedOnly ? "전체 보기" : "저장 목록 " + likedIds.length + "개"}
               </button>
             </div>
 
             {displayResults.length === 0 ? (
               <div className="py-20 text-center rounded-2xl bg-white border border-slate-100 p-8">
-                <p className="text-2xl mb-3">🔍</p>
                 <p className="text-slate-700 font-bold mb-1">
                   {showLikedOnly ? "저장한 아파트가 없어요" : "조건에 맞는 매물이 없어요"}
                 </p>
-                <p className="text-slate-400 text-sm">
-                  {showLikedOnly ? "아파트 카드의 하트 버튼을 눌러 저장해보세요" : "다른 지역을 선택하거나 평수 조건을 변경해보세요."}
+                <p className="text-slate-400 text-sm mt-1">
+                  {showLikedOnly ? "하트 버튼을 눌러 저장해보세요" : "다른 지역을 선택하거나 평수 조건을 변경해보세요."}
                 </p>
               </div>
             ) : (
@@ -458,25 +470,29 @@ function ResultsPageInner() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-bold text-slate-400">#{index + 1}</span>
+                          <span className="text-xs font-bold text-slate-400">{"#" + (index + 1)}</span>
                           <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
                           <button
                             onClick={() => handleLike(item)}
-                            className="ml-auto text-xl"
+                            className="ml-1 text-lg leading-none"
                           >
-                            {likedIds.includes(getLikeId(item)) ? "❤️" : "🤍"}
+                            {likedIds.includes(item.aptNm + "-" + item.district + "-" + item.pyeong) ? "❤️" : "🤍"}
                           </button>
                         </div>
-                        <p className="text-xs font-medium text-slate-500">{selectedDistrict} {item.umdNm} · {item.floor}층</p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {selectedDistrict} {item.umdNm} · {item.floor}층
+                        </p>
                         {item.badges.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {item.badges.map((badge, i) => (
-                              <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{badge}</span>
+                              <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
+                                {badge}
+                              </span>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div className="text-center bg-white rounded-xl p-3 shadow-sm min-w-[64px]">
+                      <div className="text-center bg-white rounded-xl p-3 shadow-sm min-w-[60px]">
                         <p className="text-xs font-bold text-slate-500">점수</p>
                         <p className={"text-2xl font-extrabold " + getScoreColor(item.score)}>{item.score}</p>
                         <p className="text-xs text-slate-400">/100</p>
@@ -490,7 +506,9 @@ function ResultsPageInner() {
                     </div>
 
                     <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
-                      <p className="text-xs font-bold text-white">최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)</p>
+                      <p className="text-xs font-bold text-white">
+                        최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)
+                      </p>
                     </div>
 
                     <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
@@ -516,7 +534,7 @@ function ResultsPageInner() {
                         onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
                         className="rounded-xl border-2 border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                       >
-                        {expandedIndex === index ? "간단히" : "점수 상세"}
+                        {expandedIndex === index ? "간단히" : "점수상세"}
                       </button>
                       <button
                         onClick={() => openNaver(item.aptNm, selectedDistrict)}
@@ -579,14 +597,16 @@ function ResultsPageInner() {
 
 export default function ResultsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
-          <p className="text-slate-500 font-medium">로딩 중...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+            <p className="text-slate-500 font-medium">로딩 중...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ResultsPageInner />
     </Suspense>
   );
