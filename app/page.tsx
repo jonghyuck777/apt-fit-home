@@ -9,11 +9,11 @@ const CONSULTING_FORM_URL = "https://naver.me/I5w4omQm";
 export default function HomePage() {
   const router = useRouter();
 
-  const [stationA, setStationA] = useState("강남역");
-  const [stationB, setStationB] = useState("도봉역");
-  const [budget, setBudget] = useState("10");
-  const [cash, setCash] = useState("5");
-  const [monthlyRepay, setMonthlyRepay] = useState("100");
+  const [stationA, setStationA] = useState("");
+  const [stationB, setStationB] = useState("");
+  const [budget, setBudget] = useState("");
+  const [cash, setCash] = useState("");
+  const [monthlyRepay, setMonthlyRepay] = useState("");
   const [household, setHousehold] = useState("family");
   const [pyeong, setPyeong] = useState("30");
   const [buildAge, setBuildAge] = useState("any");
@@ -46,26 +46,29 @@ export default function HomePage() {
     router.push("/results?" + params.toString());
   };
 
-  const inputClass = "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-400";
-  const selectClass = "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
-  const labelClass = "mb-2 block text-sm font-bold text-slate-700";
+  const inputClass = "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 placeholder:text-slate-300";
+  const selectClass = "w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+  const labelClass = "mb-2 block text-sm font-bold text-slate-600";
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+    <main className="min-h-screen bg-slate-50">
 
-      {/* 상단 배너 - 사무실/상가 컨설팅 */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-3">
+      {/* 상단 배너 */}
+      <div
+        onClick={() => window.open(CONSULTING_FORM_URL, "_blank")}
+        className="cursor-pointer bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5"
+      >
         <div className="mx-auto max-w-2xl flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold text-slate-400">사무실 · 상가 찾고 계세요?</p>
-            <p className="text-sm font-bold text-white">전문 공인중개사가 직접 컨설팅해드려요</p>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🏢</span>
+            <div>
+              <p className="text-xs font-bold text-indigo-200">사무실 · 상가 찾으세요?</p>
+              <p className="text-sm font-extrabold text-white">전문 공인중개사 무료 컨설팅 →</p>
+            </div>
           </div>
-          <button
-            onClick={() => window.open(CONSULTING_FORM_URL, "_blank")}
-            className="shrink-0 rounded-xl bg-amber-400 px-4 py-2 text-xs font-extrabold text-slate-900 hover:bg-amber-300 transition"
-          >
-            무료 상담받기
-          </button>
+          <span className="shrink-0 rounded-lg bg-white bg-opacity-20 px-3 py-1.5 text-xs font-bold text-white border border-white border-opacity-30">
+            무료상담
+          </span>
         </div>
       </div>
 
@@ -73,20 +76,28 @@ export default function HomePage() {
 
         {/* 헤더 */}
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 rounded-2xl mb-4">
-            <span className="text-3xl">🏠</span>
+          <div className="inline-flex items-center gap-2 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg">
+              <span className="text-xl">🏠</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900">내집찾기</h1>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">내집찾기</h1>
-          <p className="mt-2 text-base text-slate-500 font-medium">부부 직장역 기준 중간지점으로 최적 아파트를 찾아드려요</p>
+          <p className="text-sm font-medium text-slate-500">부부 직장역 기준 중간지점 아파트 추천 서비스</p>
+          <div className="mt-3 flex justify-center gap-4 text-xs font-semibold text-slate-400">
+            <span>✓ 실거래가 기반</span>
+            <span>✓ 출퇴근 분석</span>
+            <span>✓ AI 점수 추천</span>
+          </div>
         </div>
 
         <div className="space-y-4">
 
-          {/* STEP 1 - 직장역 */}
+          {/* STEP 1 */}
           <section className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold">1</span>
-              <h2 className="text-base font-bold text-slate-900">직장역 입력</h2>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xs font-extrabold shadow">1</span>
+              <h2 className="text-base font-extrabold text-slate-900">직장역 입력</h2>
+              <span className="ml-auto text-xs font-medium text-slate-400">중간지점 자동 계산</span>
             </div>
             <div className="grid gap-3 grid-cols-2">
               <div>
@@ -98,9 +109,9 @@ export default function HomePage() {
                   className={inputClass}
                 />
                 {foundA ? (
-                  <p className="mt-1.5 text-xs font-semibold text-emerald-600">✓ {foundA.name}</p>
+                  <p className="mt-1.5 text-xs font-bold text-emerald-500">✓ {foundA.name}</p>
                 ) : stationA ? (
-                  <p className="mt-1.5 text-xs font-semibold text-red-500">역을 찾지 못했어요</p>
+                  <p className="mt-1.5 text-xs font-bold text-red-400">역을 찾지 못했어요</p>
                 ) : null}
               </div>
               <div>
@@ -112,34 +123,39 @@ export default function HomePage() {
                   className={inputClass}
                 />
                 {foundB ? (
-                  <p className="mt-1.5 text-xs font-semibold text-emerald-600">✓ {foundB.name}</p>
+                  <p className="mt-1.5 text-xs font-bold text-emerald-500">✓ {foundB.name}</p>
                 ) : stationB ? (
-                  <p className="mt-1.5 text-xs font-semibold text-red-500">역을 찾지 못했어요</p>
+                  <p className="mt-1.5 text-xs font-bold text-red-400">역을 찾지 못했어요</p>
                 ) : null}
               </div>
             </div>
 
             {nearestStation && (
-              <div className="mt-4 rounded-xl bg-blue-50 border border-blue-100 p-4">
-                <p className="text-xs font-bold text-blue-700 mb-1">중간지점 계산 결과</p>
-                <p className="text-sm font-bold text-blue-900">
-                  추천 거주지역: <span className="text-blue-600">{nearestStation.name}</span> 근처
+              <div className="mt-4 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-base">📍</span>
+                  <p className="text-xs font-extrabold text-indigo-700">중간지점 계산 완료</p>
+                </div>
+                <p className="text-sm font-extrabold text-slate-900">
+                  추천 지역: <span className="text-indigo-600">{nearestStation.name}</span> 근처
                 </p>
                 {totalCommute && (
-                  <p className="text-sm text-blue-800 mt-1">
-                    예상 총 출퇴근 <span className="font-bold">{totalCommute}분/일</span>
-                    <span className="text-xs text-blue-600 ml-2">(남편 {commuteA}분 + 아내 {commuteB}분)</span>
-                  </p>
+                  <div className="mt-2 flex gap-3">
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm">남편 {commuteA}분</span>
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm">아내 {commuteB}분</span>
+                    <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm">합산 {totalCommute}분/일</span>
+                  </div>
                 )}
               </div>
             )}
           </section>
 
-          {/* STEP 2 - 예산 */}
+          {/* STEP 2 */}
           <section className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold">2</span>
-              <h2 className="text-base font-bold text-slate-900">예산</h2>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xs font-extrabold shadow">2</span>
+              <h2 className="text-base font-extrabold text-slate-900">예산</h2>
+              <span className="ml-auto text-xs font-medium text-slate-400">대출 이자 자동 계산</span>
             </div>
             <div className="grid gap-3 grid-cols-3">
               <div>
@@ -158,19 +174,19 @@ export default function HomePage() {
 
             {loanNeeded > 0 && (
               <div className="mt-3 rounded-xl bg-amber-50 border border-amber-100 p-4">
-                <p className="text-xs font-bold text-amber-700 mb-2">대출 계산 (금리 3.5% 기준)</p>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">필요 대출</p>
+                <p className="text-xs font-extrabold text-amber-700 mb-3">💰 대출 계산 (금리 3.5% 기준)</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-white p-2.5 shadow-sm">
+                    <p className="text-xs text-amber-600 font-semibold">필요 대출</p>
                     <p className="text-lg font-extrabold text-amber-900">{loanNeeded.toFixed(1)}억</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">월 예상 이자</p>
-                    <p className="text-lg font-extrabold text-amber-900">{monthlyInterest.toLocaleString()}만원</p>
+                  <div className="rounded-xl bg-white p-2.5 shadow-sm">
+                    <p className="text-xs text-amber-600 font-semibold">월 이자</p>
+                    <p className="text-lg font-extrabold text-amber-900">{monthlyInterest}만원</p>
                   </div>
-                  <div>
-                    <p className="text-xs text-amber-600 font-medium">상환 여유</p>
-                    <p className={"text-lg font-extrabold " + (Number(monthlyRepay) >= monthlyInterest ? "text-emerald-600" : "text-red-500")}>
+                  <div className="rounded-xl bg-white p-2.5 shadow-sm">
+                    <p className="text-xs text-amber-600 font-semibold">여유</p>
+                    <p className={"text-lg font-extrabold " + (Number(monthlyRepay) >= monthlyInterest ? "text-emerald-500" : "text-red-500")}>
                       {Number(monthlyRepay) >= monthlyInterest ? "여유" : "빠듯"}
                     </p>
                   </div>
@@ -179,11 +195,11 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* STEP 3 - 집 조건 */}
+          {/* STEP 3 */}
           <section className="rounded-2xl bg-white p-5 shadow-sm border border-slate-100">
             <div className="flex items-center gap-2 mb-4">
-              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold">3</span>
-              <h2 className="text-base font-bold text-slate-900">집 조건</h2>
+              <span className="flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xs font-extrabold shadow">3</span>
+              <h2 className="text-base font-extrabold text-slate-900">집 조건</h2>
             </div>
             <div className="grid gap-3 grid-cols-2">
               <div>
@@ -244,22 +260,24 @@ export default function HomePage() {
           <button
             onClick={handleSearch}
             disabled={!foundA || !foundB}
-            className="w-full rounded-2xl bg-slate-900 py-5 text-base font-extrabold text-white shadow-lg transition hover:bg-slate-700 active:scale-95 disabled:bg-slate-300 disabled:shadow-none"
+            className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 py-5 text-base font-extrabold text-white shadow-lg transition hover:opacity-90 active:scale-95 disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed"
           >
-            {!foundA || !foundB ? "역 이름을 확인해주세요" : "아파트 추천 받기"}
+            {!foundA || !foundB ? "직장역을 입력해주세요" : "🔍 아파트 추천 받기"}
           </button>
 
           {/* 하단 사무실/상가 배너 */}
           <div
             onClick={() => window.open(CONSULTING_FORM_URL, "_blank")}
-            className="cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-5 flex items-center justify-between gap-4 hover:border-slate-400 transition"
+            className="cursor-pointer rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 p-5 flex items-center justify-between gap-4 hover:opacity-90 transition shadow-lg"
           >
             <div>
               <p className="text-xs font-bold text-slate-400 mb-1">사무실 · 상가</p>
-              <p className="text-base font-extrabold text-slate-900">전문가 컨설팅 받아보기</p>
-              <p className="text-xs text-slate-500 mt-1">조건을 남기시면 공인중개사가 직접 연락드려요</p>
+              <p className="text-base font-extrabold text-white">전문가 컨설팅 받아보기</p>
+              <p className="text-xs text-slate-400 mt-1">조건을 남기시면 공인중개사가 직접 연락드려요</p>
             </div>
-            <div className="shrink-0 text-3xl">🏢</div>
+            <div className="shrink-0 w-12 h-12 rounded-xl bg-white bg-opacity-10 flex items-center justify-center text-2xl">
+              🏢
+            </div>
           </div>
 
         </div>
