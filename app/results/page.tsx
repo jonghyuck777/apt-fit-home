@@ -106,6 +106,8 @@ const STATION_COORDS: Record<string, { lat: number; lng: number }> = {
   "분당구청역": { lat: 37.3794, lng: 127.1317 },
 };
 
+const INTERIOR_FORM_URL = "https://form.naver.com/response/Cx_lyALC6ddYCZrQ1QM2Cg";
+
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const R = 6371;
@@ -370,13 +372,13 @@ function ResultsPageInner() {
     window.open("https://search.naver.com/search.naver?query=" + query, "_blank");
   }
 
-  function openAuction(aptNm: string, district: string) {
-    const query = encodeURIComponent(aptNm + " " + district + " 경매");
+  function openAuction(aptNm: string) {
+    const query = encodeURIComponent(aptNm + " 경매");
     window.open("https://search.naver.com/search.naver?query=" + query, "_blank");
   }
 
   const displayResults = showLikedOnly
-    ? results.filter((item) => likedIds.includes(item.aptNm + "-" + item.district + "-" + item.pyeong))
+    ? results.filter((item) => likedIds.includes(getLikeId(item)))
     : results;
 
   return (
@@ -384,10 +386,7 @@ function ResultsPageInner() {
       <div className="mx-auto max-w-2xl px-4 py-6">
 
         <div className="mb-5 flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold"
-          >
+          <button onClick={() => router.back()} className="flex items-center justify-center w-10 h-10 rounded-xl border-2 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-bold">
             뒤로
           </button>
           <div>
@@ -424,11 +423,8 @@ function ResultsPageInner() {
           <p className="mb-3 text-xs font-medium text-slate-500">중간지점({nearStation})에서 가까운 순서</p>
           <div className="flex flex-wrap gap-2">
             {sortedDistricts.map((district) => (
-              <button
-                key={district}
-                onClick={() => setSelectedDistrict(district)}
-                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}
-              >
+              <button key={district} onClick={() => setSelectedDistrict(district)}
+                className={"rounded-full px-3 py-1.5 text-xs font-bold transition " + (selectedDistrict === district ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200")}>
                 {district}
               </button>
             ))}
@@ -472,22 +468,15 @@ function ResultsPageInner() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs font-bold text-slate-400">{"#" + (index + 1)}</span>
                           <h3 className="text-base font-extrabold text-slate-900">{item.aptNm}</h3>
-                          <button
-                            onClick={() => handleLike(item)}
-                            className="ml-1 text-lg leading-none"
-                          >
-                            {likedIds.includes(item.aptNm + "-" + item.district + "-" + item.pyeong) ? "❤️" : "🤍"}
+                          <button onClick={() => handleLike(item)} className="ml-1 text-lg leading-none">
+                            {likedIds.includes(getLikeId(item)) ? "❤️" : "🤍"}
                           </button>
                         </div>
-                        <p className="text-xs font-medium text-slate-500">
-                          {selectedDistrict} {item.umdNm} · {item.floor}층
-                        </p>
+                        <p className="text-xs font-medium text-slate-500">{selectedDistrict} {item.umdNm} · {item.floor}층</p>
                         {item.badges.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
                             {item.badges.map((badge, i) => (
-                              <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">
-                                {badge}
-                              </span>
+                              <span key={i} className="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white">{badge}</span>
                             ))}
                           </div>
                         )}
@@ -506,9 +495,7 @@ function ResultsPageInner() {
                     </div>
 
                     <div className="mt-2 rounded-xl bg-blue-600 px-3 py-2">
-                      <p className="text-xs font-bold text-white">
-                        최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)
-                      </p>
+                      <p className="text-xs font-bold text-white">최근 거래: {item.dealDate} · {item.priceEok.toFixed(1)}억 ({item.floor}층)</p>
                     </div>
 
                     <div className="mt-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
@@ -526,6 +513,12 @@ function ResultsPageInner() {
                         <p className="text-xs font-bold text-slate-500 mb-1">예상 인테리어</p>
                         <p className="text-sm font-bold text-slate-900">{item.interiorCost}</p>
                         <p className="text-xs font-medium text-slate-400 mt-1">{item.interiorDesc}</p>
+                        <button
+                          onClick={() => window.open(INTERIOR_FORM_URL, "_blank")}
+                          className="mt-2 w-full rounded-lg bg-purple-500 py-1.5 text-xs font-bold text-white hover:bg-purple-600 transition"
+                        >
+                          최저가 견적받기
+                        </button>
                       </div>
                     </div>
 
@@ -543,7 +536,7 @@ function ResultsPageInner() {
                         네이버
                       </button>
                       <button
-                        onClick={() => openAuction(item.aptNm, selectedDistrict)}
+                        onClick={() => openAuction(item.aptNm)}
                         className="rounded-xl bg-orange-500 py-2.5 text-xs font-bold text-white hover:bg-orange-600 transition"
                       >
                         경매조회
@@ -597,16 +590,14 @@ function ResultsPageInner() {
 
 export default function ResultsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-500 font-medium">로딩 중...</p>
-          </div>
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-500 font-medium">로딩 중...</p>
         </div>
-      }
-    >
+      </div>
+    }>
       <ResultsPageInner />
     </Suspense>
   );
