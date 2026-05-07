@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { findStation, getMidpoint, getNearestStation, estimateCommuteMinutes } from "./lib/subway";
 
+const CONSULTING_FORM_URL = "https://naver.me/I5w4omQm";
+
 export default function HomePage() {
   const router = useRouter();
 
@@ -50,6 +52,23 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+
+      {/* 상단 배너 - 사무실/상가 컨설팅 */}
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-3">
+        <div className="mx-auto max-w-2xl flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold text-slate-400">사무실 · 상가 찾고 계세요?</p>
+            <p className="text-sm font-bold text-white">전문 공인중개사가 직접 컨설팅해드려요</p>
+          </div>
+          <button
+            onClick={() => window.open(CONSULTING_FORM_URL, "_blank")}
+            className="shrink-0 rounded-xl bg-amber-400 px-4 py-2 text-xs font-extrabold text-slate-900 hover:bg-amber-300 transition"
+          >
+            무료 상담받기
+          </button>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-2xl px-4 py-8">
 
         {/* 헤더 */}
@@ -57,7 +76,7 @@ export default function HomePage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-slate-900 rounded-2xl mb-4">
             <span className="text-3xl">🏠</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">아파트 추천</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">내집찾기</h1>
           <p className="mt-2 text-base text-slate-500 font-medium">부부 직장역 기준 중간지점으로 최적 아파트를 찾아드려요</p>
         </div>
 
@@ -229,6 +248,19 @@ export default function HomePage() {
           >
             {!foundA || !foundB ? "역 이름을 확인해주세요" : "아파트 추천 받기"}
           </button>
+
+          {/* 하단 사무실/상가 배너 */}
+          <div
+            onClick={() => window.open(CONSULTING_FORM_URL, "_blank")}
+            className="cursor-pointer rounded-2xl border-2 border-slate-200 bg-white p-5 flex items-center justify-between gap-4 hover:border-slate-400 transition"
+          >
+            <div>
+              <p className="text-xs font-bold text-slate-400 mb-1">사무실 · 상가</p>
+              <p className="text-base font-extrabold text-slate-900">전문가 컨설팅 받아보기</p>
+              <p className="text-xs text-slate-500 mt-1">조건을 남기시면 공인중개사가 직접 연락드려요</p>
+            </div>
+            <div className="shrink-0 text-3xl">🏢</div>
+          </div>
 
         </div>
       </div>
